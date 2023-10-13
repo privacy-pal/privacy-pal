@@ -14,7 +14,7 @@ type DeletionResult struct {
 func (pal *Client) ProcessDeletionRequest(dataSubjectLocator Locator, dataSubjectID string) (DeletionResult, error) {
 	fmt.Printf("Processing deletion request for data subject %s\n", dataSubjectID)
 	// TODO: check data subject is valid
-	batch := pal.firestoreClient.Batch()
+	batch := pal.FirestoreClient.Batch()
 
 	delResult := DeletionResult{}
 	err := pal.processDeletionRequest(dataSubjectLocator, dataSubjectID, batch, &delResult)

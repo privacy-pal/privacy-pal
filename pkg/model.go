@@ -40,11 +40,11 @@ type DataNode interface {
 }
 
 type Client struct {
-	firestoreClient *firestore.Client
+	FirestoreClient *firestore.Client
 }
 
 func NewClient(firestoreClient *firestore.Client) *Client {
-	return &Client{firestoreClient: firestoreClient}
+	return &Client{FirestoreClient: firestoreClient}
 }
 
 func validateLocator(loc Locator) error {

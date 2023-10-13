@@ -9,7 +9,7 @@ import (
 )
 
 func (pal *Client) getDocumentFromFirestore(loc Locator) (DataNode, error) {
-	docRef := pal.firestoreClient.Collection(loc.CollectionPath[0]).Doc(loc.DocIDs[0])
+	docRef := pal.FirestoreClient.Collection(loc.CollectionPath[0]).Doc(loc.DocIDs[0])
 
 	for i := 1; i < len(loc.CollectionPath); i++ {
 		docRef = docRef.Collection(loc.CollectionPath[i]).Doc(loc.DocIDs[i])
@@ -29,7 +29,7 @@ func (pal *Client) getDocumentFromFirestore(loc Locator) (DataNode, error) {
 }
 
 func (pal *Client) getDocumentsFromFirestore(loc Locator) ([]DataNode, error) {
-	docRef := pal.firestoreClient.Collection(loc.CollectionPath[0])
+	docRef := pal.FirestoreClient.Collection(loc.CollectionPath[0])
 
 	for i := 1; i < len(loc.CollectionPath); i++ {
 		docRef = docRef.Doc(loc.DocIDs[i-1]).Collection(loc.CollectionPath[i])
@@ -59,7 +59,7 @@ func (pal *Client) getDocumentsFromFirestore(loc Locator) ([]DataNode, error) {
 }
 
 func (pal *Client) addDeletionOperationToBatch(batch *firestore.WriteBatch, loc Locator) {
-	docRef := pal.firestoreClient.Collection(loc.CollectionPath[0]).Doc(loc.DocIDs[0])
+	docRef := pal.FirestoreClient.Collection(loc.CollectionPath[0]).Doc(loc.DocIDs[0])
 
 	for i := 1; i < len(loc.CollectionPath); i++ {
 		docRef = docRef.Collection(loc.CollectionPath[i]).Doc(loc.DocIDs[i])
@@ -68,7 +68,7 @@ func (pal *Client) addDeletionOperationToBatch(batch *firestore.WriteBatch, loc 
 }
 
 func (pal *Client) addUpdateOperationToBatch(batch *firestore.WriteBatch, loc Locator, fieldsToUpdate []firestore.Update) {
-	docRef := pal.firestoreClient.Collection(loc.CollectionPath[0]).Doc(loc.DocIDs[0])
+	docRef := pal.FirestoreClient.Collection(loc.CollectionPath[0]).Doc(loc.DocIDs[0])
 
 	for i := 1; i < len(loc.CollectionPath); i++ {
 		docRef = docRef.Collection(loc.CollectionPath[i]).Doc(loc.DocIDs[i])
