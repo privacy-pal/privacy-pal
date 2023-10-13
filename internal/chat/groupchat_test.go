@@ -3,7 +3,7 @@ package chat
 import (
 	"testing"
 
-	pal "github.com/tianrendong/privacy-pal/pkg"
+	pal "github.com/privacy-pal/privacy-pal/pkg"
 )
 
 func Test1(t *testing.T) {
