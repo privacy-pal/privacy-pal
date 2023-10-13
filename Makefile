@@ -1,5 +1,5 @@
 proxy = proxy.golang.org
-module = github.com/privacy-pal/privacy-pal/pkg
+module = github.com/privacy-pal/privacy-pal
 
 .PHONY: publish
 
