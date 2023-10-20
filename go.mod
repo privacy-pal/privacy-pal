@@ -8,6 +8,7 @@ require (
 	cloud.google.com/go/iam v1.1.3 // indirect
 	cloud.google.com/go/storage v1.33.0 // indirect
 	github.com/google/uuid v1.3.1 // indirect
+	golang.org/x/mod v0.13.0 // indirect
 )
 
 require (
@@ -32,6 +33,7 @@ require (
 	golang.org/x/sys v0.13.0 // indirect
 	golang.org/x/text v0.13.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
+	golang.org/x/tools v0.14.0
 	golang.org/x/xerrors v0.0.0-20231012003039-104605ab7028 // indirect
 	google.golang.org/api v0.147.0
 	google.golang.org/appengine v1.6.8 // indirect
