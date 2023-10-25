@@ -8,7 +8,12 @@ import (
 )
 
 func (u *User) HandleAccess(dataSubjectId string, currentDocumentID string) map[string]interface{} {
-	return nil
+	data := make(map[string]interface{})
+
+	data["Name"] = c.Name
+	data["GCs"] = c.GCs
+
+	return data
 }
 
 func (u *User) HandleDeletion(dataSubjectId string) (nodesToTraverse []pal.Locator, deleteNode bool, fieldsToUpdate []firestore.Update) {

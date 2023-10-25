@@ -1,4 +1,4 @@
 - User:
-    fields:
-      - a
+    Name: direct_field
+    GCs: direct_field
 - GroupChat:

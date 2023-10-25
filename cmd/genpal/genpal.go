@@ -93,7 +93,7 @@ func main() {
 			log.Printf("error reading yamlspec file: %s\n", err)
 			os.Exit(2)
 		}
-		var obj []map[string]interface{}
+		var obj []map[string]genpal.DataNodeFields
 		err = yaml.Unmarshal(data, &obj)
 		if err != nil {
 			log.Printf("error unmarshalling yamlspec file: %s\n", err)
