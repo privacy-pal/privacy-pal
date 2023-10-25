@@ -5,7 +5,7 @@ import (
 	pal "github.com/privacy-pal/privacy-pal/pkg"
 )
 
-func (u *User) HandleAccess(dataSubjectId string, currentDocumentID string) map[string]interface{} {
+func (u *User) HandleAccess(dataSubjectId string, currentDataNodeLocator pal.Locator) map[string]interface{} {
 	ret := make(map[string]interface{})
 
 	ret["name"] = u.Name
@@ -26,12 +26,12 @@ func (u *User) HandleDeletion(dataSubjectId string) (nodesToTraverse []pal.Locat
 	return
 }
 
-func (gc *GroupChat) HandleAccess(dataSubjectId string, currentDocumentID string) map[string]interface{} {
+func (gc *GroupChat) HandleAccess(dataSubjectId string, currentDataNodeLocator pal.Locator) map[string]interface{} {
 	ret := make(map[string]interface{})
 	ret["messages"] = []pal.Locator{{
 		Type:           pal.Collection,
-		CollectionPath: []string{FirestoreGroupChatCollection, FirestoreMessagesCollection},
-		DocIDs:         []string{currentDocumentID},
+		CollectionPath: append(currentDataNodeLocator.CollectionPath, FirestoreMessagesCollection),
+		DocIDs:         currentDataNodeLocator.DocIDs,
 		Queries: []pal.Query{{
 			Path:  "userId",
 			Op:    "==",
@@ -47,7 +47,7 @@ func (m *GroupChat) HandleDeletion(dataSubjectId string) (nodesToTraverse []pal.
 	return
 }
 
-func (m *Message) HandleAccess(dataSubjectId string, currentDocumentID string) map[string]interface{} {
+func (m *Message) HandleAccess(dataSubjectId string, currentDataNodeLocator pal.Locator) map[string]interface{} {
 	ret := make(map[string]interface{})
 	if m.UserID == dataSubjectId {
 		ret["content"] = m.Content

@@ -25,7 +25,7 @@ func GenerateWithYamlspecMode(data []map[string]DataNodeFields) (ret string) {
 }
 
 func generateHandleAccess(typename string, fields DataNodeFields) (ret string) {
-	ret += "func (" + strings.ToLower(typename[0:1]) + " *" + typename + ") HandleAccess(dataSubjectId string, currentDocumentID string) map[string]interface{} {\n"
+	ret += "func (" + strings.ToLower(typename[0:1]) + " *" + typename + ") HandleAccess(dataSubjectId string, currentDataNodeLocator pal.Locator) map[string]interface{} {\n"
 	// only generate function headers
 	if fields == nil {
 		ret += "return nil\n"

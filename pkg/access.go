@@ -13,7 +13,7 @@ func (pal *Client) ProcessAccessRequest(dataSubjectLocator Locator, dataSubjectI
 	if err != nil {
 		return nil, fmt.Errorf("%s %w", ACCESS_REQUEST_ERROR, err)
 	}
-	data, err := pal.processAccessRequest(dataSubject, dataSubjectID, dataSubjectLocator.DocIDs[len(dataSubjectLocator.DocIDs)-1])
+	data, err := pal.processAccessRequest(dataSubject, dataSubjectID, dataSubjectLocator)
 	if err != nil {
 		return nil, fmt.Errorf("%s %w", ACCESS_REQUEST_ERROR, err)
 	}
@@ -21,9 +21,9 @@ func (pal *Client) ProcessAccessRequest(dataSubjectLocator Locator, dataSubjectI
 	return data, nil
 }
 
-func (pal *Client) processAccessRequest(dataNode DataNode, dataSubjectID string, currentDocumentID string) (map[string]interface{}, error) {
+func (pal *Client) processAccessRequest(dataNode DataNode, dataSubjectID string, dataNodeLocator Locator) (map[string]interface{}, error) {
 
-	data := dataNode.HandleAccess(dataSubjectID, currentDocumentID)
+	data := dataNode.HandleAccess(dataSubjectID, dataNodeLocator)
 	report := make(map[string]interface{})
 
 	for key, value := range data {
@@ -73,7 +73,7 @@ func (pal *Client) processLocator(report map[string]interface{}, loc Locator, da
 		if err != nil {
 			return nil, err
 		}
-		retData, err := pal.processAccessRequest(dataNode, dataSubjectID, loc.DocIDs[len(loc.DocIDs)-1])
+		retData, err := pal.processAccessRequest(dataNode, dataSubjectID, loc)
 		if err != nil {
 			return nil, err
 		}
@@ -84,7 +84,7 @@ func (pal *Client) processLocator(report map[string]interface{}, loc Locator, da
 			return nil, err
 		}
 		for _, dataNode := range dataNodes {
-			retData, err := pal.processAccessRequest(dataNode, dataSubjectID, loc.DocIDs[len(loc.DocIDs)-1])
+			retData, err := pal.processAccessRequest(dataNode, dataSubjectID, loc)
 			if err != nil {
 				return nil, err
 			}

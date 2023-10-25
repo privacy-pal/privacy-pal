@@ -7,11 +7,8 @@ import (
 	pal "github.com/privacy-pal/privacy-pal/pkg"
 )
 
-func (u *User) HandleAccess(dataSubjectId string, currentDocumentID string) map[string]interface{} {
+func (u *User) HandleAccess(dataSubjectId string, currentDataNodeLocator pal.Locator) map[string]interface{} {
 	data := make(map[string]interface{})
-
-	data["Name"] = c.Name
-	data["GCs"] = c.GCs
 
 	return data
 }
@@ -20,10 +17,22 @@ func (u *User) HandleDeletion(dataSubjectId string) (nodesToTraverse []pal.Locat
 	return nil, false, nil
 }
 
-func (g *GroupChat) HandleAccess(dataSubjectId string, currentDocumentID string) map[string]interface{} {
-	return nil
+func (g *GroupChat) HandleAccess(dataSubjectId string, currentDataNodeLocator pal.Locator) map[string]interface{} {
+	data := make(map[string]interface{})
+
+	return data
 }
 
 func (g *GroupChat) HandleDeletion(dataSubjectId string) (nodesToTraverse []pal.Locator, deleteNode bool, fieldsToUpdate []firestore.Update) {
+	return nil, false, nil
+}
+
+func (m *Message) HandleAccess(dataSubjectId string, currentDataNodeLocator pal.Locator) map[string]interface{} {
+	data := make(map[string]interface{})
+
+	return data
+}
+
+func (m *Message) HandleDeletion(dataSubjectId string) (nodesToTraverse []pal.Locator, deleteNode bool, fieldsToUpdate []firestore.Update) {
 	return nil, false, nil
 }

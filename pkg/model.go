@@ -33,7 +33,7 @@ const (
 )
 
 type DataNode interface {
-	HandleAccess(dataSubjectId string, currentDocumentID string) map[string]interface{}
+	HandleAccess(dataSubjectId string, currentDataNodeLocator Locator) map[string]interface{}
 	// Only one of deleteNode and fieldsToUpdate should be set.
 	// If deleteNode is set, fieldsToUpdate will be ignored (node will be deleted).
 	HandleDeletion(dataSubjectId string) (nodesToTraverse []Locator, deleteNode bool, fieldsToUpdate []firestore.Update)
