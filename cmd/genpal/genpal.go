@@ -1,4 +1,4 @@
-package main // import "github.com/privacy-pal/privacy-pal/cmd/pal-gen"
+package main // "github.com/privacy-pal/privacy-pal/cmd/genpal"
 
 import (
 	"bytes"
@@ -12,12 +12,15 @@ import (
 	"path/filepath"
 	"strings"
 
+	genpal "github.com/privacy-pal/privacy-pal/internal/genpal"
 	"golang.org/x/tools/go/packages"
+	yaml "gopkg.in/yaml.v2"
 )
 
 var (
-	typeNames = flag.String("type", "", "comma-separated list of type names; must be set")
-	output    = flag.String("output", "", "output file name; default srcdir/<type>_privacy.go")
+	mode   = flag.String("mode", "", "typenames or yamlspec")
+	input  = flag.String("input", "", "if mode is typenames, comma-separated list of type names; if mode is yamlspec, path to yaml file")
+	output = flag.String("output", "", "output file name; default srcdir/<type>_privacy.go")
 )
 
 // Usage is a replacement usage function for the flags package.
@@ -28,16 +31,42 @@ func Usage() {
 	flag.PrintDefaults()
 }
 
+func validateArgs() (genpal.Mode, error) {
+	// Validate mode
+	switch *mode {
+	case string(genpal.ModeTypenames):
+		types := strings.Split(*input, ",")
+		if len(types) == 0 {
+			return "", fmt.Errorf("no typenames provided")
+		}
+	case string(genpal.ModeYamlspec):
+		if *input == "" {
+			return "", fmt.Errorf("no yamlspec provided")
+		}
+		// check if file exists
+		_, err := os.Stat(*input)
+		if err != nil {
+			return "", fmt.Errorf("yamlspec file does not exist")
+		}
+	case "":
+		return "", fmt.Errorf("no mode provided")
+	default:
+		return "", fmt.Errorf("invalid mode")
+	}
+	return genpal.Mode(*mode), nil
+}
+
 func main() {
 	log.SetFlags(0)
 	log.SetPrefix("genpal: ")
 	flag.Usage = Usage
 	flag.Parse()
-	if len(*typeNames) == 0 {
-		flag.Usage()
+
+	genpalMode, err := validateArgs()
+	if err != nil {
+		log.Printf("%s. See 'genpal -help'.", err)
 		os.Exit(2)
 	}
-	types := strings.Split(*typeNames, ",")
 
 	// Write to a file under current working directory if no output specified
 	args := []string{"."}
@@ -54,9 +83,23 @@ func main() {
 	g.Printf("\n")
 	g.Printf("import (\npal \"github.com/privacy-pal/privacy-pal/pkg\"\n\"cloud.google.com/go/firestore\"\n)\n") // Used by all methods.
 
-	// Run generate for each type.
-	for _, typeName := range types {
-		g.generate(typeName)
+	if genpalMode == genpal.ModeTypenames {
+		types := strings.Split(*input, ",")
+		g.Printf(genpal.GenerateWithTypenameMode(types))
+
+	} else if genpalMode == genpal.ModeYamlspec {
+		data, err := os.ReadFile(*input)
+		if err != nil {
+			log.Printf("error reading yamlspec file: %s\n", err)
+			os.Exit(2)
+		}
+		var obj []map[string]interface{}
+		err = yaml.Unmarshal(data, &obj)
+		if err != nil {
+			log.Printf("error unmarshalling yamlspec file: %s\n", err)
+			os.Exit(2)
+		}
+		g.Printf(genpal.GenerateWithYamlspecMode(obj))
 	}
 
 	// Format the output.
@@ -65,10 +108,10 @@ func main() {
 	// Write to file.
 	outputName := *output
 	if outputName == "" {
-		baseName := fmt.Sprintf("%s_privacy.go", types[0])
+		baseName := "privacy.go"
 		outputName = filepath.Join(dir, strings.ToLower(baseName))
 	}
-	err := os.WriteFile(outputName, src, 0644)
+	err = os.WriteFile(outputName, src, 0644)
 	if err != nil {
 		log.Fatalf("writing output: %s", err)
 	}
@@ -131,15 +174,6 @@ func (g *Generator) addPackage(pkg *packages.Package) {
 			pkg:  g.pkg,
 		}
 	}
-}
-
-func (g *Generator) generate(typeName string) {
-	g.Printf(`func (%s *%s) HandleAccess(dataSubjectId string, currentDocumentID string) map[string]interface{} {`, strings.ToLower(typeName[0:1]), typeName)
-	g.Printf("return nil\n")
-	g.Printf("}\n\n")
-	g.Printf(`func (%s *%s) HandleDeletion(dataSubjectId string) (nodesToTraverse []pal.Locator, deleteNode bool, fieldsToUpdate []firestore.Update) {`, strings.ToLower(typeName[0:1]), typeName)
-	g.Printf("return nil, false, nil\n")
-	g.Printf("}\n")
 }
 
 // format returns the gofmt-ed contents of the Generator's buffer.
