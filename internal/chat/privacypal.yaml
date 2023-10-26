@@ -15,10 +15,10 @@ GroupChat:
     indirect_fields:
         - type: subcollection<Message>
           exported_name: Messages 
-          query:
-            path: userId
-            op: ==
-            value: dataSubjectID
+          queries:
+            - path: userId
+              op: ==
+              value: ${dataSubjectId}
 
 Message:
     collection_path:

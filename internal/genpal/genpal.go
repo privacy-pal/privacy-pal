@@ -107,13 +107,41 @@ func generateHandleAccess(typename string, dataNodeProperty *DataNodeProperty) (
 					Type:           %s,
 					CollectionPath: append(currentDataNodeLocator.CollectionPath, "%s"),
 					DocIDs:         currentDataNodeLocator.DocIDs,
-					NewDataNode:    func() pal.DataNode { return &%s{} },
-				}`+"\n",
+					NewDataNode:    func() pal.DataNode { return &%s{} },`+"\n",
 				field.ExportedName,
 				locatorTypeStr,
 				collectionPaths[dataNode][len(collectionPaths[dataNode])-1],
 				dataNode,
 			)
+
+			if field.Queries != nil && len(*field.Queries) > 0 {
+				queryStr := ""
+				for _, query := range *field.Queries {
+					queryVal := fmt.Sprintf("\"%s\"", query.Value)
+					if strings.HasPrefix(query.Value.(string), "${") && strings.HasSuffix(query.Value.(string), "}") {
+						queryVal = queryVal[3 : len(queryVal)-2]
+					}
+
+					queryStr += fmt.Sprintf(
+						`{
+							Path:  "%s",
+							Op:    "%s",
+							Value: %s,
+						},`+"\n",
+						query.Path,
+						query.Op,
+						queryVal,
+					)
+				}
+				ret += fmt.Sprintf(
+					`Queries: []pal.Query{
+						%s
+					},`+"\n",
+					queryStr,
+				)
+			}
+
+			ret += "}\n"
 		}
 	}
 

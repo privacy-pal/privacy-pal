@@ -1,5 +1,7 @@
 package genpal
 
+import pal "github.com/privacy-pal/privacy-pal/pkg"
+
 type Mode string
 
 const (
@@ -14,8 +16,8 @@ type DataNodeProperty struct {
 }
 
 type IndirectField struct {
-	Type         string      `yaml:"type"`
-	FieldName    string      `yaml:"field_name,omitempty"`
-	ExportedName string      `yaml:"exported_name"`
-	Query        interface{} `yaml:"query,omitempty"`
+	Type         string       `yaml:"type"`
+	FieldName    string       `yaml:"field_name,omitempty"`
+	ExportedName string       `yaml:"exported_name"`
+	Queries      *[]pal.Query `yaml:"queries,omitempty"`
 }
