@@ -9,8 +9,8 @@ Privacy Pal provides two main functions for processing privacy requests:
 - `ProcessAccessRequest` - Retrieve personal data for a data subject
 - `ProcessDeletionRequest` - Delete or anonymize personal data for a data subject
 
-To use PAL, applications need to:
-1. Define structs for your application data and implement the `HandleAccess` and `HandleDeletion` methods. This allows PAL to interface with your application's data models. 
+To use Privacy Pal, applications need to:
+1. Define structs for your application data and implement the `HandleAccess` and `HandleDeletion` methods. This allows Privacy Pal to interface with your application's data models. 
     ```
     type User struct {
         ID   string            
@@ -49,7 +49,7 @@ To use PAL, applications need to:
     ```
 
 ### Locator 
-A Locator is a struct that contains information to locate a specific data node or collection in the database. It allows Privacy Pal to recursively retrieve data for access requests.
+A Locator is a struct that contains information to locate a document or a set of documents in the database. It allows Privacy Pal to recursively retrieve data for access requests.
 
 The fields in a Locator are:
 - `Type`: Either `Document` or `Collection`
@@ -111,7 +111,7 @@ Implementing the `HandleAccess` and `HandleDeletion` methods manually can be ted
 For example,
 ```
 # Typenames mode
-genpal -mode=typenames -input=User,Post,Comment -output=internal/chat/privacy.go
+genpal -mode=typenames -input=User,GroupChat,Message -output=internal/chat/privacy.go
 
 # YAML mode  
 genpal -mode=yamlspec -input=internal/chat/privacypal.yaml -output=internal/chat/privacy.go
