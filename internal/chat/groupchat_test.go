@@ -43,6 +43,12 @@ func Test1(t *testing.T) {
 		panic(err)
 	}
 
+	// user 1 sends another message to groupchat
+	err = user1.SendMessageToGroupChat(gc1.ID, "how are you?")
+	if err != nil {
+		panic(err)
+	}
+
 	dataSubjectLocator := pal.Locator{
 		Type:           pal.Document,
 		CollectionPath: []string{FirestoreUsersCollection},
