@@ -63,7 +63,7 @@ func (pal *Client) processAccessRequest(dataNode DataNode, dataSubjectID string,
 	return report, nil
 }
 
-func (pal *Client) processLocator(report map[string]interface{}, loc Locator, dataSubjectID string) (map[string]interface{}, error) {
+func (pal *Client) processLocator(report map[string]interface{}, loc Locator, dataSubjectID string) (interface{}, error) {
 	err := validateLocator(loc)
 	if err != nil {
 		return nil, err
@@ -83,13 +83,16 @@ func (pal *Client) processLocator(report map[string]interface{}, loc Locator, da
 		if err != nil {
 			return nil, err
 		}
+		var retData []interface{}
 		for _, dataNode := range dataNodes {
-			retData, err := pal.processAccessRequest(dataNode, dataSubjectID, loc)
+			currDataNodeData, err := pal.processAccessRequest(dataNode, dataSubjectID, loc)
 			if err != nil {
 				return nil, err
 			}
-			return retData, nil
+			retData = append(retData, currDataNodeData)
 		}
+		return retData, nil
+
 	}
 	return nil, fmt.Errorf("invalid locator type")
 }
