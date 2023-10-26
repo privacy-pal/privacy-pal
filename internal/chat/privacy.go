@@ -7,6 +7,27 @@ import (
 	pal "github.com/privacy-pal/privacy-pal/pkg"
 )
 
+func (u *User) HandleAccess(dataSubjectId string, currentDataNodeLocator pal.Locator) map[string]interface{} {
+	data := make(map[string]interface{})
+
+	data["Name"] = u.Name
+	data["Groupchats"] = make([]pal.Locator, 0)
+	for _, id := range u.GCs {
+		data["Groupchats"] = append(data["Groupchats"].([]pal.Locator), pal.Locator{
+			Type:           pal.Document,
+			CollectionPath: []string{"gcs"},
+			DocIDs:         []string{id},
+			NewDataNode:    func() pal.DataNode { return &GroupChat{} },
+		})
+	}
+
+	return data
+}
+
+func (u *User) HandleDeletion(dataSubjectId string) (nodesToTraverse []pal.Locator, deleteNode bool, fieldsToUpdate []firestore.Update) {
+	return nil, false, nil
+}
+
 func (g *GroupChat) HandleAccess(dataSubjectId string, currentDataNodeLocator pal.Locator) map[string]interface{} {
 	data := make(map[string]interface{})
 
@@ -41,26 +62,5 @@ func (m *Message) HandleAccess(dataSubjectId string, currentDataNodeLocator pal.
 }
 
 func (m *Message) HandleDeletion(dataSubjectId string) (nodesToTraverse []pal.Locator, deleteNode bool, fieldsToUpdate []firestore.Update) {
-	return nil, false, nil
-}
-
-func (u *User) HandleAccess(dataSubjectId string, currentDataNodeLocator pal.Locator) map[string]interface{} {
-	data := make(map[string]interface{})
-
-	data["Name"] = u.Name
-	data["Groupchats"] = make([]pal.Locator, 0)
-	for _, id := range u.GCs {
-		data["Groupchats"] = append(data["Groupchats"].([]pal.Locator), pal.Locator{
-			Type:           pal.Document,
-			CollectionPath: []string{"gcs"},
-			DocIDs:         []string{id},
-			NewDataNode:    func() pal.DataNode { return &GroupChat{} },
-		})
-	}
-
-	return data
-}
-
-func (u *User) HandleDeletion(dataSubjectId string) (nodesToTraverse []pal.Locator, deleteNode bool, fieldsToUpdate []firestore.Update) {
 	return nil, false, nil
 }
