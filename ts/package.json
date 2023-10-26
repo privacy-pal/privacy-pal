@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "@firebase/firestore": "^4.3.0",
+    "firebase-admin": "^11.11.0"
+  }
+}
