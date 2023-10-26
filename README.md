@@ -12,17 +12,17 @@ Privacy Pal provides two main functions for processing privacy requests:
 To use PAL, applications need to:
 1. Define structs for your application data and implement the `HandleAccess` and `HandleDeletion` methods. This allows PAL to interface with your application's data models. 
     ```
-    type UserData struct {
-        Name string
-        Email string
-        Posts []Post
+    type User struct {
+        ID   string            
+        Name string            
+        GCs  []string          
     }
 
-    func (u *UserData) HandleAccess(dataSubjectId string, currentDataNodeLocator Locator) map[string]interface{} {
+    func (u *User) HandleAccess(dataSubjectId string, currentDataNodeLocator Locator) map[string]interface{} {
         // return data to fulfill access request 
     }
 
-    func (u *UserData) HandleDeletion(dataSubjectId string) (nodesToTraverse []Locator, deleteNode bool, fieldsToUpdate []firestore.Update) {
+    func (u *User) HandleDeletion(dataSubjectId string) (nodesToTraverse []Locator, deleteNode bool, fieldsToUpdate []firestore.Update) {
         // return data to fulfill deletion request
     }
     ```
@@ -61,40 +61,34 @@ The fields in a Locator are:
 Example:
 ```
 pal.Locator{
-		Type:           pal.Document,
-		CollectionPath: []string{"users"},
-		DocIDs:         []string{"123"},
-		NewDataNode:    func() pal.DataNode { return &User{} },
-	}
+    Type:           pal.Document,
+    CollectionPath: []string{"users"},
+    DocIDs:         []string{"123"},
+    NewDataNode:    func() pal.DataNode { return &User{} },
+}
 ```
 
 // TODO: more detailed explanation for collectionpath and DocIDs
 
 ### Implementing `HandleAccess`
 
-Privacy Pal uses the `HandleAccess` method to retrieve the personal data for a data subject during an access request.
-
-You should implement the method to return a map of the data to beinclude in the access report. The keys in the map will become the field names in the report.
+Privacy Pal uses the `HandleAccess` method to retrieve the personal data for a data subject during an access request. The method should return a map of the data to beinclude in the access report. The keys in the map will become the field names in the report. 
 
 There are a few ways to populate the map:
 
-For fields that should be directly returned to the user, just use the field directly as the value to the map:
+- For fields that should be directly returned to the user, just use the field directly as the value to the map:
 
-```
-data["Name"] = u.Name
-```
+        data["Name"] = u.Name
 
-For fields that require reading other documents or collections from Firestore, you can put a locator or a list of locators as the value:
-```
-// list of locators
-data["Groupchats"] = []Locator{...}
+- For fields that require reading other documents or collections from Firestore, you can put a locator or a list of locators as the value:
 
-// locator
+        // list of locators
+        data["Groupchats"] = []Locator{...}
 
-data["Messages"] = Locator{}
-```
+        // locator
+        data["Messages"] = Locator{}
 
-Privacy Pal will use these locators to traverse down the database and return all data relevant to the data subject.
+    Privacy Pal will use these locators to traverse down the database and return all data relevant to the data subject.
 
 You can see a full example here
 // TODO: add link to example
