@@ -76,6 +76,9 @@ func main() {
 		outputName = "./privacy.go"
 	} else {
 		// set args to be the directory containing output file
+		if !(strings.HasPrefix(outputName, "/") || strings.HasPrefix(outputName, "./") || strings.HasPrefix(outputName, "../")) {
+			outputName = "./" + outputName
+		}
 		args = []string{outputName[:strings.LastIndex(outputName, "/")]}
 	}
 
