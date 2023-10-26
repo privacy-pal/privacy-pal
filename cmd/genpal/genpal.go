@@ -9,7 +9,6 @@ import (
 	"go/types"
 	"log"
 	"os"
-	"path/filepath"
 	"strings"
 
 	genpal "github.com/privacy-pal/privacy-pal/internal/genpal"
@@ -68,9 +67,17 @@ func main() {
 		os.Exit(2)
 	}
 
-	// Write to a file under current working directory if no output specified
-	args := []string{"."}
-	dir := args[0]
+	outputName := *output
+	var args []string
+
+	if outputName == "" {
+		// Write to a file under current working directory if no output specified
+		args = []string{"."}
+		outputName = "./privacy.go"
+	} else {
+		// set args to be the directory containing output file
+		args = []string{outputName[:strings.LastIndex(outputName, "/")]}
+	}
 
 	// Parse the package once.
 	g := Generator{}
@@ -106,11 +113,6 @@ func main() {
 	src := g.format()
 
 	// Write to file.
-	outputName := *output
-	if outputName == "" {
-		baseName := "privacy.go"
-		outputName = filepath.Join(dir, strings.ToLower(baseName))
-	}
 	err = os.WriteFile(outputName, src, 0644)
 	if err != nil {
 		log.Fatalf("writing output: %s", err)
