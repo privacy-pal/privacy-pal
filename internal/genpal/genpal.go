@@ -21,22 +21,16 @@ func GenerateWithTypenameMode(typenames []string) (ret string) {
 	return
 }
 
-func GenerateWithYamlspecMode(data []map[string]DataNodeProperty) (ret string) {
+func GenerateWithYamlspecMode(data map[string]DataNodeProperty) (ret string) {
 	// Store collection paths for each typename
-	for _, obj := range data {
-		// only has one key, which is the typename (e.g. "User")
-		for typename, property := range obj {
-			collectionPaths[typename] = property.CollectionPath
-		}
+	for typename, property := range data {
+		collectionPaths[typename] = property.CollectionPath
 	}
 
 	// Generate interface methods for each typename
-	for _, obj := range data {
-		// only has one key, which is the typename (e.g. "User")
-		for typename, property := range obj {
-			ret += generateHandleAccess(typename, &property)
-			ret += generateHandleDeletion(typename)
-		}
+	for typename, property := range data {
+		ret += generateHandleAccess(typename, &property)
+		ret += generateHandleDeletion(typename)
 	}
 	return
 }

@@ -1,4 +1,4 @@
-- User:
+User:
     collection_path:
         - users
     direct_fields:
@@ -9,7 +9,7 @@
           exported_name: Groupchats 
           
     
-- GroupChat:
+GroupChat:
     collection_path:
         - gcs
     indirect_fields:
@@ -20,7 +20,7 @@
             op: ==
             value: dataSubjectID
 
-- Message:
+Message:
     collection_path:
         - gcs
         - messages

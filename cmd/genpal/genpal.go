@@ -100,13 +100,13 @@ func main() {
 			log.Printf("error reading yamlspec file: %s\n", err)
 			os.Exit(2)
 		}
-		var obj []map[string]genpal.DataNodeProperty
-		err = yaml.Unmarshal(data, &obj)
+		var dataNodes map[string]genpal.DataNodeProperty
+		err = yaml.Unmarshal(data, &dataNodes)
 		if err != nil {
 			log.Printf("error unmarshalling yamlspec file: %s\n", err)
 			os.Exit(2)
 		}
-		g.Printf(genpal.GenerateWithYamlspecMode(obj))
+		g.Printf(genpal.GenerateWithYamlspecMode(dataNodes))
 	}
 
 	// Format the output.
