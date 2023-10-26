@@ -1,0 +1,29 @@
+- User:
+    collection_path:
+        - users
+    direct_fields:
+        - Name 
+    indirect_fields:
+        - type: list<ID<GroupChat>>
+          field_name: GCs
+          exported_name: Groupchats 
+          
+    
+- GroupChat:
+    collection_path:
+        - gcs
+    indirect_fields:
+        - type: subcollection<Message>
+          exported_name: Messages 
+          query:
+            path: userId
+            op: ==
+            value: dataSubjectID
+
+- Message:
+    collection_path:
+        - gcs
+        - messages
+    direct_fields:
+        - Content
+        - Timestamp
