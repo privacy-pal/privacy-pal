@@ -4,7 +4,7 @@ import { Locator, validateLocator, isLocator } from "./model/locator";
 import { DataNode } from './model/datanode';
 import { getDocumentFromFirestore, getDocumentsFromFirestore } from "./firestore";
 
-export class PrivacyPalClient {
+class PrivacyPalClient {
 
     db: Firestore;
 
@@ -85,3 +85,5 @@ export class PrivacyPalClient {
         throw new Error("Invalid locator type");
     }
 }
+
+export default PrivacyPalClient;
