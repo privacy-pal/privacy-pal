@@ -1,7 +1,8 @@
 
-import { CollectionReference, Firestore, Query, WhereFilterOp } from 'firebase-admin/firestore';
+import { Firestore } from 'firebase-admin/firestore';
 import { Locator, validateLocator, isLocator } from "./model/locator";
 import { DataNode } from './model/datanode';
+import { getDocumentFromFirestore, getDocumentsFromFirestore } from "./firestore";
 
 export class PrivacyPalClient {
 
@@ -18,62 +19,13 @@ export class PrivacyPalClient {
             throw new Error("Data subject locator type must be document");
         }
 
-        const dataSubject = await this.getDocumentFromFirestore(dataSubjectLocator);
+        const dataSubject = await getDocumentFromFirestore(dataSubjectLocator);
         const data = await this.processAccessRequestHelper(dataSubject, dataSubjectId, dataSubjectLocator);
         return data;
     }
 
     processDeletionRequest(dataSubjectLocator: Locator, dataSubjectId: string) {
 
-    }
-
-    private async getDocumentFromFirestore(locator: Locator): Promise<DataNode> {
-        let docRef = this.db.collection(locator.collectionPath[0]).doc(locator.docIds[0]);
-
-        for (let i = 1; i < locator.collectionPath.length; i++) {
-            docRef = docRef.collection(locator.collectionPath[i]).doc(locator.docIds[i]);
-        }
-
-        return docRef.get()
-            .then((doc) => {
-                if (!doc.exists) {
-                    throw new Error("Document does not exist");
-                }
-                return doc.data() as DataNode;
-            })
-            .catch((err) => {
-                throw new Error('Error getting document: ' + err);
-            });
-    }
-
-    private async getDocumentsFromFirestore(locator: Locator): Promise<DataNode[]> {
-        let docRef: CollectionReference = this.db.collection(locator.collectionPath[0]);
-
-        for (let i = 1; i < locator.collectionPath.length; i++) {
-            docRef = docRef.doc(locator.docIds[i - 1]).collection(locator.collectionPath[i]);
-        }
-
-        let query: Query = docRef;
-        if (locator.queries?.length) {
-            query = query.where(locator.queries[0].path, locator.queries[0].op as WhereFilterOp, locator.queries[0].value);
-            for (let i = 1; i < locator.queries.length; i++) {
-                query = query.where(locator.queries[i].path, locator.queries[i].op as WhereFilterOp, locator.queries[i].value);
-            }
-        }
-
-        
-        return query.get()
-            .then((snapshot) => {
-                let dataNodes: DataNode[] = [];
-                snapshot.forEach((doc) => {
-                    // TODO: verify
-                    dataNodes.push(doc.data() as DataNode);
-                });
-                return dataNodes;
-            })
-            .catch((err) => {
-                throw new Error('Error getting documents: ' + err);
-            });
     }
 
     private async processAccessRequestHelper(dataNode: DataNode, dataSubjectID: string, dataNodeLocator: Locator): Promise<Record<string, any>> {
@@ -115,13 +67,13 @@ export class PrivacyPalClient {
         }
 
         if (locator.type == "document") {
-            const dataNode = await this.getDocumentFromFirestore(locator);
+            const dataNode = await getDocumentFromFirestore(locator);
             const retData = await this.processAccessRequestHelper(dataNode, dataSubjectID, locator);
             return retData;
         }
 
         if (locator.type == "collection") {
-            const dataNodes = await this.getDocumentsFromFirestore(locator);
+            const dataNodes = await getDocumentsFromFirestore(locator);
             const retData: Record<string, any>[] = [];
             for (var dataNode of dataNodes) {
                 const currDataNodeData = await this.processAccessRequestHelper(dataNode, dataSubjectID, locator);
