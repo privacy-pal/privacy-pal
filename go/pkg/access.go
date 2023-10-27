@@ -29,7 +29,7 @@ func (pal *Client) processAccessRequest(dataNode DataNode, dataSubjectID string,
 	for key, value := range data {
 		if loc, ok := value.(Locator); ok {
 			// if locator, recursively process
-			retData, err := pal.processLocator(report, loc, dataSubjectID)
+			retData, err := pal.processLocator(loc, dataSubjectID)
 			if err != nil {
 				return nil, err
 			}
@@ -38,7 +38,7 @@ func (pal *Client) processAccessRequest(dataNode DataNode, dataSubjectID string,
 			// if locator slice, recursively process each locator
 			report[key] = make([]interface{}, 0)
 			for _, loc := range locs {
-				retData, err := pal.processLocator(report, loc, dataSubjectID)
+				retData, err := pal.processLocator(loc, dataSubjectID)
 				if err != nil {
 					return nil, err
 				}
@@ -48,7 +48,7 @@ func (pal *Client) processAccessRequest(dataNode DataNode, dataSubjectID string,
 			// if map, recursively process each locator
 			report[key] = make(map[string]interface{})
 			for k, loc := range locMap {
-				retData, err := pal.processLocator(report, loc, dataSubjectID)
+				retData, err := pal.processLocator(loc, dataSubjectID)
 				if err != nil {
 					return nil, err
 				}
@@ -63,7 +63,7 @@ func (pal *Client) processAccessRequest(dataNode DataNode, dataSubjectID string,
 	return report, nil
 }
 
-func (pal *Client) processLocator(report map[string]interface{}, loc Locator, dataSubjectID string) (interface{}, error) {
+func (pal *Client) processLocator(loc Locator, dataSubjectID string) (interface{}, error) {
 	err := validateLocator(loc)
 	if err != nil {
 		return nil, err
