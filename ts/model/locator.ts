@@ -5,7 +5,6 @@ export interface Locator {
     collectionPath: string[];
     docIds: string[];
     queries?: Query[];
-    newDataNode: { new(): DataNode };
 }
 
 export interface Query {
