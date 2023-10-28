@@ -43,5 +43,5 @@ export function validateLocator(locator: Locator): Error | null {
 }
 
 export function isLocator(obj: any): obj is Locator {
-    return obj.type && obj.collectionPath && obj.docIds && obj.newDataNode;
+    return obj.locatorType && obj.dataType && obj.collectionPath && obj.docIds;
 }

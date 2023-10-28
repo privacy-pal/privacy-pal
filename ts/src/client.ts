@@ -22,6 +22,7 @@ class PrivacyPalClient {
         const dataSubject = await getDocumentFromFirestore(this.db, dataSubjectLocator);
         const data = await this.processAccessRequestHelper(handleAccess, dataSubject, dataSubjectId, dataSubjectLocator);
         return data;
+        // TODO: maybe make all timestamp values human readable
     }
 
     processDeletionRequest(dataSubjectLocator: Locator, dataSubjectId: string) {
@@ -37,14 +38,14 @@ class PrivacyPalClient {
                 // if locator, recursively process
                 const retData = await this.processLocator(handleAccess, value, dataSubjectID);
                 report[key] = retData;
-            } else if (value instanceof Array) {
+            } else if (value instanceof Array && value.length > 0 && isLocator(value[0])) {
                 // if locator slice, recursively process each locator
                 report[key] = [];
                 for (const loc of value) {
                     const retData = await this.processLocator(handleAccess, loc, dataSubjectID);
                     report[key].push(retData);
                 }
-            } else if (value instanceof Map) {
+            } else if (value instanceof Map && value.size > 0 && isLocator(value.values().next().value)) {
                 // if map, recursively process each locator
                 report[key] = new Map<string, any>();
                 for (const [k, loc] of Object.entries(value)) {

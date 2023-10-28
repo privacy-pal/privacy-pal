@@ -1,4 +1,4 @@
-import { CollectionReference, Firestore, Query, WhereFilterOp } from "firebase-admin/firestore";
+import { CollectionReference, FieldPath, Firestore, Query, WhereFilterOp } from "firebase-admin/firestore";
 import { Locator } from "./model";
 
 export async function getDocumentFromFirestore(db: Firestore, locator: Locator): Promise<any> {
@@ -29,9 +29,9 @@ export async function getDocumentsFromFirestore(db: Firestore, locator: Locator)
 
     let query: Query = docRef;
     if (locator.queries?.length) {
-        query = query.where(locator.queries[0].path, locator.queries[0].op as WhereFilterOp, locator.queries[0].value);
+        query = query.where(new FieldPath(locator.queries[0].path), locator.queries[0].op as WhereFilterOp, locator.queries[0].value);
         for (let i = 1; i < locator.queries.length; i++) {
-            query = query.where(locator.queries[i].path, locator.queries[i].op as WhereFilterOp, locator.queries[i].value);
+            query = query.where(new FieldPath(locator.queries[i].path), locator.queries[i].op as WhereFilterOp, locator.queries[i].value);
         }
     }
 

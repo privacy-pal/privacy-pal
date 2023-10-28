@@ -25,11 +25,11 @@ function handleAccessGroupChat(dataSubjectId: string, locator: Locator, obj: Gro
             collectionPath: [...locator.collectionPath, FirestoreCollections.Messages],
             docIds: locator.docIds,
             queries: [{
-                fieldPath: 'userID',
-                opStr: '==',
+                path: 'userID',
+                op: '==',
                 value: dataSubjectId
             }]
-        }
+        } as Locator
     };
 };
 
