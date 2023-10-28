@@ -1,9 +1,9 @@
-import { CollectionReference, Query, WhereFilterOp } from "firebase-admin/firestore";
+import { CollectionReference, Firestore, Query, WhereFilterOp } from "firebase-admin/firestore";
 import { DataNode } from "./model/datanode";
 import { Locator } from "./model/locator";
 
-export async function getDocumentFromFirestore(locator: Locator): Promise<DataNode> {
-    let docRef = this.db.collection(locator.collectionPath[0]).doc(locator.docIds[0]);
+export async function getDocumentFromFirestore(db: Firestore, locator: Locator): Promise<DataNode> {
+    let docRef = db.collection(locator.collectionPath[0]).doc(locator.docIds[0]);
 
     for (let i = 1; i < locator.collectionPath.length; i++) {
         docRef = docRef.collection(locator.collectionPath[i]).doc(locator.docIds[i]);
@@ -21,8 +21,8 @@ export async function getDocumentFromFirestore(locator: Locator): Promise<DataNo
         });
 }
 
-export async function getDocumentsFromFirestore(locator: Locator): Promise<DataNode[]> {
-    let docRef: CollectionReference = this.db.collection(locator.collectionPath[0]);
+export async function getDocumentsFromFirestore(db: Firestore, locator: Locator): Promise<DataNode[]> {
+    let docRef: CollectionReference = db.collection(locator.collectionPath[0]);
 
     for (let i = 1; i < locator.collectionPath.length; i++) {
         docRef = docRef.doc(locator.docIds[i - 1]).collection(locator.collectionPath[i]);

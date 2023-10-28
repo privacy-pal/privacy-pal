@@ -7,8 +7,10 @@ import DirectMessage from "./dm";
 import GroupChat from "./gc";
 import Message from "./message";
 import { FirestoreCollections, JoinQuitAction } from "./shared";
+import { DataNode } from "../../../model/datanode";
+import { Locator, LocatorType } from "../../../model/locator";
 
-export default class User {
+export default class User implements DataNode {
     id: string;
     name: string;
     gcs: string[];
@@ -18,6 +20,27 @@ export default class User {
         this.name = name;
         this.gcs = [];
         this.dms = {};
+    }
+
+    handleAccess(dataSubjectId: string, locator: Locator): Record<string, any> {
+        return {
+            name: this.name,
+            groupChats: this.gcs.map((gc: string): Locator => {
+                return {
+                    type: LocatorType.Document,
+                    collectionPath: [FirestoreCollections.GroupChat],
+                    docIds: [gc],
+                }
+            })
+        };
+    }
+
+    handleDeletion(dataSubjectId: string): {
+        nodesToTraverse: Locator[],
+        deleteNode: boolean,
+        updateData?: UpdateData<any>
+    } {
+        return {nodesToTraverse: [], deleteNode: false};
     }
 
     async CreateGroupChat(): Promise<GroupChat | null> {

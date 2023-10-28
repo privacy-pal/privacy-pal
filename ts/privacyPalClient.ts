@@ -19,7 +19,7 @@ class PrivacyPalClient {
             throw new Error("Data subject locator type must be document");
         }
 
-        const dataSubject = await getDocumentFromFirestore(dataSubjectLocator);
+        const dataSubject = await getDocumentFromFirestore(this.db, dataSubjectLocator);
         const data = await this.processAccessRequestHelper(dataSubject, dataSubjectId, dataSubjectLocator);
         return data;
     }
@@ -29,6 +29,7 @@ class PrivacyPalClient {
     }
 
     private async processAccessRequestHelper(dataNode: DataNode, dataSubjectID: string, dataNodeLocator: Locator): Promise<Record<string, any>> {
+        console.log(dataNode);
         const data = dataNode.handleAccess(dataSubjectID, dataNodeLocator);
         let report: Record<string, any> = {};
 
@@ -67,13 +68,13 @@ class PrivacyPalClient {
         }
 
         if (locator.type == "document") {
-            const dataNode = await getDocumentFromFirestore(locator);
+            const dataNode = await getDocumentFromFirestore(this.db, locator);
             const retData = await this.processAccessRequestHelper(dataNode, dataSubjectID, locator);
             return retData;
         }
 
         if (locator.type == "collection") {
-            const dataNodes = await getDocumentsFromFirestore(locator);
+            const dataNodes = await getDocumentsFromFirestore(this.db, locator);
             const retData: Record<string, any>[] = [];
             for (var dataNode of dataNodes) {
                 const currDataNodeData = await this.processAccessRequestHelper(dataNode, dataSubjectID, locator);
