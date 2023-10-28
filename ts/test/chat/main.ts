@@ -4,6 +4,7 @@ import { JoinQuitAction } from "./model/shared";
 import PrivacyPalClient from "../../PrivacyPalClient";
 import { db } from "../firestore";
 import { Locator, LocatorType } from "../../model/locator";
+import handleAccess from "./privacy";
 
 async function test1() {
     // create user 1
@@ -44,13 +45,14 @@ async function test1() {
 
     const privacyPalClient: PrivacyPalClient = new PrivacyPalClient(db);
     const dataSubjectLocator: Locator = {
-        type: LocatorType.Document,
+        locatorType: LocatorType.Document,
+        dataType: 'user',
         collectionPath: ['users'],
         docIds: [user1.id]
     }
-        
-    const res = await privacyPalClient.processAccessRequest(dataSubjectLocator, user1.id)
-    console.log(res)
+
+    const res = await privacyPalClient.processAccessRequest(handleAccess, dataSubjectLocator, user1.id)
+    console.log(JSON.stringify(res))
 }
 
 test1();

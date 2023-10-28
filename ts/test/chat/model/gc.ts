@@ -1,10 +1,6 @@
-import { UpdateData } from "firebase-admin/firestore";
-import { DataNode } from "../../../model/datanode";
-import { Locator, LocatorType } from "../../../model/locator";
-import Message from "./message"
-import { FirestoreCollections } from "./shared";
+import Message from "./message";
 
-export default class GroupChat implements DataNode{
+export default class GroupChat {
     id: string;
     users: string[];
     messages: Message[];
@@ -14,28 +10,5 @@ export default class GroupChat implements DataNode{
         this.owner = owner;
         this.users = users;
         this.messages = [];
-    }
-
-    handleAccess(dataSubjectId: string, locator: Locator): Record<string, any> {
-        return {
-            messages: {
-                    type: LocatorType.Collection,
-                    collectionPath: [...locator.collectionPath, FirestoreCollections.Messages],
-                    docIds: locator.docIds,
-                    queries: [{
-                        fieldPath: 'userID',
-                        opStr: '==',
-                        value: dataSubjectId
-                    }]
-                }
-        };
-    };
-
-    handleDeletion(dataSubjectId: string): {
-        nodesToTraverse: Locator[],
-        deleteNode: boolean,
-        updateData?: UpdateData<any>
-    } {
-        return {nodesToTraverse: [], deleteNode: false};
     }
 }

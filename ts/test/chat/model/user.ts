@@ -7,10 +7,8 @@ import DirectMessage from "./dm";
 import GroupChat from "./gc";
 import Message from "./message";
 import { FirestoreCollections, JoinQuitAction } from "./shared";
-import { DataNode } from "../../../model/datanode";
-import { Locator, LocatorType } from "../../../model/locator";
 
-export default class User implements DataNode {
+export default class User {
     id: string;
     name: string;
     gcs: string[];
@@ -20,27 +18,6 @@ export default class User implements DataNode {
         this.name = name;
         this.gcs = [];
         this.dms = {};
-    }
-
-    handleAccess(dataSubjectId: string, locator: Locator): Record<string, any> {
-        return {
-            name: this.name,
-            groupChats: this.gcs.map((gc: string): Locator => {
-                return {
-                    type: LocatorType.Document,
-                    collectionPath: [FirestoreCollections.GroupChat],
-                    docIds: [gc],
-                }
-            })
-        };
-    }
-
-    handleDeletion(dataSubjectId: string): {
-        nodesToTraverse: Locator[],
-        deleteNode: boolean,
-        updateData?: UpdateData<any>
-    } {
-        return {nodesToTraverse: [], deleteNode: false};
     }
 
     async CreateGroupChat(): Promise<GroupChat | null> {
@@ -71,7 +48,7 @@ export default class User implements DataNode {
             await GetUser(this.id);
             await GetGroupChat(chatID);
 
-            const updates: UpdateData<{[x: string]: any}> = {};
+            const updates: UpdateData<{ [x: string]: any }> = {};
 
             if (action === JoinQuitAction.JoinChat) {
                 updates.users = FieldValue.arrayUnion(this.id)
@@ -92,7 +69,7 @@ export default class User implements DataNode {
             }
 
             await db.collection(FirestoreCollections.Users).doc(this.id).update(updates);
-            
+
         } catch (err) {
             throw new Error(`Error updating user or group chat: ${err}`);
         }

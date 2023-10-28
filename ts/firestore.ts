@@ -1,8 +1,7 @@
 import { CollectionReference, Firestore, Query, WhereFilterOp } from "firebase-admin/firestore";
-import { DataNode } from "./model/datanode";
 import { Locator } from "./model/locator";
 
-export async function getDocumentFromFirestore(db: Firestore, locator: Locator): Promise<DataNode> {
+export async function getDocumentFromFirestore(db: Firestore, locator: Locator): Promise<any> {
     let docRef = db.collection(locator.collectionPath[0]).doc(locator.docIds[0]);
 
     for (let i = 1; i < locator.collectionPath.length; i++) {
@@ -14,14 +13,14 @@ export async function getDocumentFromFirestore(db: Firestore, locator: Locator):
             if (!doc.exists) {
                 throw new Error("Document does not exist");
             }
-            return doc.data() as DataNode;
+            return doc.data();
         })
         .catch((err) => {
             throw new Error('Error getting document: ' + err);
         });
 }
 
-export async function getDocumentsFromFirestore(db: Firestore, locator: Locator): Promise<DataNode[]> {
+export async function getDocumentsFromFirestore(db: Firestore, locator: Locator): Promise<any[]> {
     let docRef: CollectionReference = db.collection(locator.collectionPath[0]);
 
     for (let i = 1; i < locator.collectionPath.length; i++) {
@@ -36,13 +35,13 @@ export async function getDocumentsFromFirestore(db: Firestore, locator: Locator)
         }
     }
 
-    
+
     return query.get()
         .then((snapshot) => {
-            let dataNodes: DataNode[] = [];
+            let dataNodes: any[] = [];
             snapshot.forEach((doc) => {
                 // TODO: verify
-                dataNodes.push(doc.data() as DataNode);
+                dataNodes.push(doc.data());
             });
             return dataNodes;
         })

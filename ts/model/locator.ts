@@ -1,7 +1,6 @@
-import { DataNode } from "./datanode";
-
 export interface Locator {
-    type: LocatorType;
+    locatorType: LocatorType;
+    dataType: string;
     collectionPath: string[];
     docIds: string[];
     queries?: Query[];
@@ -23,11 +22,11 @@ export function validateLocator(locator: Locator): Error | null {
         return new Error("Locator must have a collectionPath");
     }
 
-    if (locator.type == LocatorType.Document && locator.docIds.length != locator.collectionPath.length) {
+    if (locator.locatorType == LocatorType.Document && locator.docIds.length != locator.collectionPath.length) {
         return new Error("Document locator must have the same number of docIds as collectionPath elements");
     }
 
-    if (locator.type == LocatorType.Collection && locator.docIds.length != locator.collectionPath.length - 1) {
+    if (locator.locatorType == LocatorType.Collection && locator.docIds.length != locator.collectionPath.length - 1) {
         return new Error("Collection locator must have one less docId than collectionPath elements");
     }
 
