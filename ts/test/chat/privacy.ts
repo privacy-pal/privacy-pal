@@ -1,4 +1,4 @@
-import { Locator, LocatorType } from "../../model/locator";
+import { Locator, LocatorType } from "../../src/model";
 import GroupChat from "./model/gc";
 import Message from "./model/message";
 import { FirestoreCollections } from "./model/shared";

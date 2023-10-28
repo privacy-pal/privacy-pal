@@ -1,8 +1,8 @@
 
 import { Firestore } from 'firebase-admin/firestore';
-import { Locator, validateLocator, isLocator } from "./model/locator";
-import { HandleAccessFunc } from './model/datanode';
 import { getDocumentFromFirestore, getDocumentsFromFirestore } from "./firestore";
+import { HandleAccessFunc } from './model';
+import { Locator, isLocator, validateLocator } from "./model";
 
 class PrivacyPalClient {
 

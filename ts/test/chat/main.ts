@@ -1,9 +1,9 @@
 import { GetGroupChat } from "./firestore/gc";
 import { CreateUser } from "./firestore/user";
 import { JoinQuitAction } from "./model/shared";
-import PrivacyPalClient from "../../PrivacyPalClient";
+import PrivacyPalClient from "../../src/client";
 import { db } from "../firestore";
-import { Locator, LocatorType } from "../../model/locator";
+import { Locator, LocatorType } from "../../src/model";
 import handleAccess from "./privacy";
 
 async function test1() {

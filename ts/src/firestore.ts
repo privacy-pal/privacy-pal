@@ -1,5 +1,5 @@
 import { CollectionReference, Firestore, Query, WhereFilterOp } from "firebase-admin/firestore";
-import { Locator } from "./model/locator";
+import { Locator } from "./model";
 
 export async function getDocumentFromFirestore(db: Firestore, locator: Locator): Promise<any> {
     let docRef = db.collection(locator.collectionPath[0]).doc(locator.docIds[0]);
