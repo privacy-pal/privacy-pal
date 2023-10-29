@@ -7,12 +7,10 @@ import (
 	pal "github.com/privacy-pal/privacy-pal/pkg"
 )
 
-var typenames []string
-var collectionPaths map[string][]string
+var dataNodeProperties map[string]DataNodeProperty
 
 func init() {
-	typenames = make([]string, 0)
-	collectionPaths = make(map[string][]string)
+	dataNodeProperties = make(map[string]DataNodeProperty)
 }
 
 func GenerateWithTypenameMode(typenames []string) (ret string) {
@@ -22,18 +20,16 @@ func GenerateWithTypenameMode(typenames []string) (ret string) {
 	return
 }
 
-func GenerateWithYamlspecMode(data map[string]DataNodeProperty) (ret string) {
-	// Store collection paths for each typename
-	for typename, property := range data {
-		typenames = append(typenames, typename)
-		collectionPaths[typename] = property.CollectionPath
+func GenerateWithYamlspecMode(typenames []string, data map[string]DataNodeProperty) (ret string) {
+	for _, typename := range typenames {
+		dataNodeProperties[typename] = data[typename]
 	}
 
 	ret += generateHandleAccess(typenames)
 
-	// Generate interface methods for each typename, in sequence of typenames in yaml spec
+	// Generate functions for each typename
 	for _, typename := range typenames {
-		property := data[typename]
+		property := dataNodeProperties[typename]
 		ret += generateHandleAccessForType(typename, &property)
 		// ret += generateHandleDeletion(typename)
 	}
@@ -117,7 +113,7 @@ func generateHandleAccessForType(typename string, dataNodeProperty *DataNodeProp
 				}`,
 				locatorTypeStr,
 				dataType,
-				fmt.Sprintf("%#v", collectionPaths[dataType]),
+				fmt.Sprintf("%#v", dataNodeProperties[dataType].CollectionPath),
 				strings.ReplaceAll(fmt.Sprintf("%#v", []string{"id"}), `"`, ""),
 			)
 
@@ -139,6 +135,7 @@ func generateHandleAccessForType(typename string, dataNodeProperty *DataNodeProp
 		}
 
 		if locatorType == pal.Collection {
+			collectionPath := dataNodeProperties[dataType].CollectionPath
 			ret += fmt.Sprintf(
 				`data["%s"] = pal.Locator{
 					LocatorType:           %s,
@@ -148,7 +145,7 @@ func generateHandleAccessForType(typename string, dataNodeProperty *DataNodeProp
 				field.ExportedName,
 				locatorTypeStr,
 				dataType,
-				collectionPaths[dataType][len(collectionPaths[dataType])-1],
+				collectionPath[len(collectionPath)-1],
 			)
 
 			if field.Queries != nil && len(*field.Queries) > 0 {

@@ -109,7 +109,18 @@ func main() {
 			log.Printf("error unmarshalling yamlspec file: %s\n", err)
 			os.Exit(2)
 		}
-		g.Printf(genpal.GenerateWithYamlspecMode(dataNodes))
+
+		var mapSlice yaml.MapSlice
+		err = yaml.Unmarshal(data, &mapSlice)
+		if err != nil {
+			log.Printf("error unmarshalling yamlspec file: %s\n", err)
+			os.Exit(2)
+		}
+		typenames := make([]string, 0)
+		for _, item := range mapSlice {
+			typenames = append(typenames, item.Key.(string))
+		}
+		g.Printf(genpal.GenerateWithYamlspecMode(typenames, dataNodes))
 	}
 
 	// Format the output.
