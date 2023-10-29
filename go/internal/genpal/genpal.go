@@ -75,6 +75,16 @@ func generateHandleAccessForType(typename string, dataNodeProperty *DataNodeProp
 	// generate function body
 	ret += "data := make(map[string]interface{})\n\n"
 
+	// generate code for data subject
+	if dataNodeProperty.IsDataSubject {
+		ret += fmt.Sprintf(
+			`if dbObj["_id"].(string) != dataSubjectId {
+				// current database object is not the data subject
+				return data
+			}` + "\n\n",
+		)
+	}
+
 	// generate code for direct fields
 	for _, field := range dataNodeProperty.DirectFields {
 		ret += fmt.Sprintf(`data["%s"] = dbObj["%s"]`+"\n", field, field)

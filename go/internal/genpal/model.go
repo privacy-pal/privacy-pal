@@ -10,6 +10,7 @@ const (
 )
 
 type DataNodeProperty struct {
+	IsDataSubject  bool            `yaml:"is_data_subject"`
 	CollectionPath []string        `yaml:"collection_path,omitempty"`
 	DirectFields   []string        `yaml:"direct_fields,omitempty"`
 	IndirectFields []IndirectField `yaml:"indirect_fields,omitempty"`

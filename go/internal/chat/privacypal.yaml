@@ -1,4 +1,6 @@
 user:
+    # TODO: include in documentation what gets generated if is_data_subject is set
+    is_data_subject: true
     collection_path:
         - users
     direct_fields:
