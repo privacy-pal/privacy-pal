@@ -5,10 +5,9 @@ import (
 	"fmt"
 
 	"cloud.google.com/go/firestore"
-	"github.com/mitchellh/mapstructure"
 )
 
-func (pal *Client) getDocumentFromFirestore(loc Locator) (DataNode, error) {
+func (pal *Client) getDocumentFromFirestore(loc Locator) (DatabaseObject, error) {
 	docRef := pal.FirestoreClient.Collection(loc.CollectionPath[0]).Doc(loc.DocIDs[0])
 
 	for i := 1; i < len(loc.CollectionPath); i++ {
@@ -23,12 +22,10 @@ func (pal *Client) getDocumentFromFirestore(loc Locator) (DataNode, error) {
 		return nil, fmt.Errorf("%s document does not exist", GET_DOCUMENT_ERROR)
 	}
 
-	dataNode := loc.NewDataNode()
-	mapstructure.Decode(doc.Data(), dataNode)
-	return dataNode, nil
+	return doc.Data(), nil
 }
 
-func (pal *Client) getDocumentsFromFirestore(loc Locator) ([]DataNode, error) {
+func (pal *Client) getDocumentsFromFirestore(loc Locator) ([]DatabaseObject, error) {
 	docRef := pal.FirestoreClient.Collection(loc.CollectionPath[0])
 
 	for i := 1; i < len(loc.CollectionPath); i++ {
@@ -49,11 +46,9 @@ func (pal *Client) getDocumentsFromFirestore(loc Locator) ([]DataNode, error) {
 		return nil, fmt.Errorf("%s %w", GET_DOCUMENT_ERROR, err)
 	}
 
-	dataNodes := make([]DataNode, len(doc))
+	dataNodes := make([]DatabaseObject, len(doc))
 	for i, d := range doc {
-		dataNode := loc.NewDataNode()
-		mapstructure.Decode(d.Data(), dataNode)
-		dataNodes[i] = dataNode
+		dataNodes[i] = d.Data()
 	}
 	return dataNodes, nil
 }

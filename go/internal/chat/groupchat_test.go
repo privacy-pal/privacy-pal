@@ -50,14 +50,14 @@ func Test1(t *testing.T) {
 	}
 
 	dataSubjectLocator := pal.Locator{
-		Type:           pal.Document,
+		LocatorType:    pal.Document,
+		DataType:       string(UserDataType),
 		CollectionPath: []string{FirestoreUsersCollection},
 		DocIDs:         []string{user1.ID},
-		NewDataNode:    func() pal.DataNode { return &User{} },
 	}
 
 	client := pal.NewClient(firestoreClient)
-	data, err := client.ProcessAccessRequest(dataSubjectLocator, user1.ID)
+	data, err := client.ProcessAccessRequest(HandleAccess, dataSubjectLocator, user1.ID)
 	if err != nil {
 		panic(err)
 	}
