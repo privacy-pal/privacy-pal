@@ -1,11 +1,12 @@
 user:
-    # TODO: include in documentation what gets generated if is_data_subject is set
+    # TODO: include in documentation what gets generated if is_data_subject is se
     is_data_subject: true
     collection_path:
         - users
     direct_fields:
         - Name 
     indirect_fields:
+    # TODO: mention in documentation that we are only supporting reading from top level collections in the yaml file
         - type: list<ID<groupchat>>
           field_name: GCs
           exported_name: Groupchats 
