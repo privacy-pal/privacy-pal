@@ -47,12 +47,3 @@ type Message struct {
 	Content   string    `firestore:"content"`
 	Timestamp time.Time `firestore:"timestamp"`
 }
-
-type DataType string
-
-const (
-	UserDataType      DataType = "user"
-	GroupChatDataType DataType = "groupchat"
-	DirectMessageTyep DataType = "directmessage"
-	MessageDataType   DataType = "message"
-)

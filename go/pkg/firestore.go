@@ -22,7 +22,9 @@ func (pal *Client) getDocumentFromFirestore(loc Locator) (DatabaseObject, error)
 		return nil, fmt.Errorf("%s document does not exist", GET_DOCUMENT_ERROR)
 	}
 
-	return doc.Data(), nil
+	data := doc.Data()
+	data["_id"] = doc.Ref.ID
+	return data, nil
 }
 
 func (pal *Client) getDocumentsFromFirestore(loc Locator) ([]DatabaseObject, error) {
@@ -48,7 +50,9 @@ func (pal *Client) getDocumentsFromFirestore(loc Locator) ([]DatabaseObject, err
 
 	dataNodes := make([]DatabaseObject, len(doc))
 	for i, d := range doc {
-		dataNodes[i] = d.Data()
+		data := d.Data()
+		data["_id"] = d.Ref.ID
+		dataNodes[i] = data
 	}
 	return dataNodes, nil
 }

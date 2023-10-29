@@ -1,6 +1,7 @@
 package chat
 
 import (
+	"encoding/json"
 	"testing"
 
 	pal "github.com/privacy-pal/privacy-pal/pkg"
@@ -49,6 +50,24 @@ func Test1(t *testing.T) {
 		panic(err)
 	}
 
+	// user 2 creates direct message with user 1
+	dm1, err := user2.CreateDirectMessage(user1.ID)
+	if err != nil {
+		panic(err)
+	}
+
+	// user 2 sends message to direct message
+	err = user2.SendMessageToDirectMessage(dm1.ID, "Hey! We are in direct message")
+	if err != nil {
+		panic(err)
+	}
+
+	// user 1 sends message to direct message
+	err = user1.SendMessageToDirectMessage(dm1.ID, "Hello!")
+	if err != nil {
+		panic(err)
+	}
+
 	dataSubjectLocator := pal.Locator{
 		LocatorType:    pal.Document,
 		DataType:       string(UserDataType),
@@ -61,5 +80,10 @@ func Test1(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	t.Log(data)
+
+	json, err := json.Marshal(data)
+	if err != nil {
+		panic(err)
+	}
+	t.Log(string(json))
 }
