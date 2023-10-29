@@ -11,38 +11,38 @@ const (
 	MessageDataType       = "message"
 )
 
-func HandleAccess(dataSubjectId string, currentDataNodeLocator pal.Locator, obj pal.DatabaseObject) map[string]interface{} {
+func HandleAccess(dataSubjectId string, currentDataNodeLocator pal.Locator, dbObj pal.DatabaseObject) map[string]interface{} {
 	switch currentDataNodeLocator.DataType {
 	case UserDataType:
-		return HandleAccessUser(dataSubjectId, currentDataNodeLocator, obj)
+		return HandleAccessUser(dataSubjectId, currentDataNodeLocator, dbObj)
 	case GroupChatDataType:
-		return HandleAccessGroupChat(dataSubjectId, currentDataNodeLocator, obj)
+		return HandleAccessGroupChat(dataSubjectId, currentDataNodeLocator, dbObj)
 	case MessageDataType:
-		return HandleAccessMessage(dataSubjectId, currentDataNodeLocator, obj)
+		return HandleAccessMessage(dataSubjectId, currentDataNodeLocator, dbObj)
 	case DirectMessageDataType:
-		return HandleAccessDirectMessage(dataSubjectId, currentDataNodeLocator, obj)
+		return HandleAccessDirectMessage(dataSubjectId, currentDataNodeLocator, dbObj)
 	default:
 		// TODO: should return error
 		return nil
 	}
 }
 
-func HandleAccessUser(dataSubjectId string, currentDataNodeLocator pal.Locator, obj pal.DatabaseObject) map[string]interface{} {
+func HandleAccessUser(dataSubjectId string, currentDataNodeLocator pal.Locator, dbObj pal.DatabaseObject) map[string]interface{} {
 	data := make(map[string]interface{})
 
 	// TODO: include in documentation: you can access the id in 2 ways
-	if obj["_id"].(string) != dataSubjectId {
-		data["Name"] = obj["name"]
+	if dbObj["_id"].(string) != dataSubjectId {
+		data["Name"] = dbObj["name"]
 		return data
 	}
 	// if currentDataNodeLocator.DocIDs[len(currentDataNodeLocator.DocIDs)-1] != dataSubjectId {
-	// 	data["Name"] = obj["name"]
+	// 	data["Name"] = dbObj["name"]
 	// 	return data
 	// }
 
-	data["Name"] = obj["name"]
+	data["Name"] = dbObj["name"]
 	data["Groupchats"] = make([]pal.Locator, 0)
-	for _, id := range obj["gcs"].([]interface{}) {
+	for _, id := range dbObj["gcs"].([]interface{}) {
 		id := id.(string)
 		data["Groupchats"] = append(data["Groupchats"].([]pal.Locator), pal.Locator{
 			LocatorType:    pal.Document,
@@ -52,7 +52,8 @@ func HandleAccessUser(dataSubjectId string, currentDataNodeLocator pal.Locator, 
 		})
 	}
 	data["DirectMessages"] = make([]pal.Locator, 0)
-	for _, DMId := range obj["dms"].(map[string]interface{}) {
+	// TODO: support this in yaml
+	for _, DMId := range dbObj["dms"].(map[string]interface{}) {
 		DMId := DMId.(string)
 		data["DirectMessages"] = append(data["DirectMessages"].([]pal.Locator), pal.Locator{
 			LocatorType:    pal.Document,
@@ -65,7 +66,7 @@ func HandleAccessUser(dataSubjectId string, currentDataNodeLocator pal.Locator, 
 	return data
 }
 
-func HandleAccessGroupChat(dataSubjectId string, currentDataNodeLocator pal.Locator, obj pal.DatabaseObject) map[string]interface{} {
+func HandleAccessGroupChat(dataSubjectId string, currentDataNodeLocator pal.Locator, dbObj pal.DatabaseObject) map[string]interface{} {
 	data := make(map[string]interface{})
 
 	data["Messages"] = pal.Locator{
@@ -85,23 +86,23 @@ func HandleAccessGroupChat(dataSubjectId string, currentDataNodeLocator pal.Loca
 	return data
 }
 
-func HandleAccessMessage(dataSubjectId string, currentDataNodeLocator pal.Locator, obj pal.DatabaseObject) map[string]interface{} {
+func HandleAccessMessage(dataSubjectId string, currentDataNodeLocator pal.Locator, dbObj pal.DatabaseObject) map[string]interface{} {
 	data := make(map[string]interface{})
 
-	data["Content"] = obj["content"]
-	data["Timestamp"] = obj["timestamp"]
+	data["Content"] = dbObj["content"]
+	data["Timestamp"] = dbObj["timestamp"]
 
 	return data
 }
 
-func HandleAccessDirectMessage(dataSubjectId string, currentDataNodeLocator pal.Locator, obj pal.DatabaseObject) map[string]interface{} {
+func HandleAccessDirectMessage(dataSubjectId string, currentDataNodeLocator pal.Locator, dbObj pal.DatabaseObject) map[string]interface{} {
 	data := make(map[string]interface{})
 
 	var otherUserId string
-	if obj["user1"].(string) == dataSubjectId {
-		otherUserId = obj["user2"].(string)
+	if dbObj["user1"].(string) == dataSubjectId {
+		otherUserId = dbObj["user2"].(string)
 	} else {
-		otherUserId = obj["user1"].(string)
+		otherUserId = dbObj["user1"].(string)
 	}
 
 	data["Other User"] = pal.Locator{

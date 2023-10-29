@@ -31,7 +31,7 @@ const (
 	Collection LocatorType = "collection"
 )
 
-type HandleAccessFunc func(dataSubjectId string, currentDataNodeLocator Locator, obj DatabaseObject) map[string]interface{}
+type HandleAccessFunc func(dataSubjectId string, currentDataNodeLocator Locator, dbObj DatabaseObject) map[string]interface{}
 
 // Only one of deleteNode and fieldsToUpdate should be set.
 // If deleteNode is set, fieldsToUpdate will be ignored (node will be deleted).

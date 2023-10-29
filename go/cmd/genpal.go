@@ -73,7 +73,7 @@ func main() {
 	if outputName == "" {
 		// Write to a file under current working directory if no output specified
 		args = []string{"."}
-		outputName = "./privacy.go"
+		outputName = "./privacy_genpal.go"
 	} else {
 		// set args to be the directory containing output file
 		if !(strings.HasPrefix(outputName, "/") || strings.HasPrefix(outputName, "./") || strings.HasPrefix(outputName, "../")) {
@@ -91,7 +91,7 @@ func main() {
 	g.Printf("\n")
 	g.Printf("package %s", g.pkg.name)
 	g.Printf("\n")
-	g.Printf("import (\npal \"github.com/privacy-pal/privacy-pal/pkg\"\n\"cloud.google.com/go/firestore\"\n)\n") // Used by all methods.
+	g.Printf("import (\npal \"github.com/privacy-pal/privacy-pal/pkg\"\n)\n\n")
 
 	if genpalMode == genpal.ModeTypenames {
 		types := strings.Split(*input, ",")

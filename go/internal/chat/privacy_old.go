@@ -33,6 +33,8 @@ func HandleAccessOld(dataSubjectId string, currentDataNodeLocator pal.Locator, o
 	}
 }
 
+// TODO: in documentation
+// You can also make your structs implement the handle access function, which allows you to access the data in the object
 func (u *User) HandleAccess(dataSubjectId string, currentDataNodeLocator pal.Locator) map[string]interface{} {
 	data := make(map[string]interface{})
 
