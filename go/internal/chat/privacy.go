@@ -1,44 +1,29 @@
 package chat
 
 import (
-	"github.com/mitchellh/mapstructure"
 	pal "github.com/privacy-pal/privacy-pal/pkg"
 )
 
 func HandleAccess(dataSubjectId string, currentDataNodeLocator pal.Locator, obj pal.DatabaseObject) map[string]interface{} {
 	switch currentDataNodeLocator.DataType {
 	case string(UserDataType):
-		user := &User{}
-		err := mapstructure.Decode(obj, user)
-		if err != nil {
-			panic(err)
-		}
-		return user.HandleAccess(dataSubjectId, currentDataNodeLocator)
+		return HandleAccessUser(dataSubjectId, currentDataNodeLocator, obj)
 	case string(GroupChatDataType):
-		groupChat := &GroupChat{}
-		err := mapstructure.Decode(obj, groupChat)
-		if err != nil {
-			panic(err)
-		}
-		return groupChat.HandleAccess(dataSubjectId, currentDataNodeLocator)
+		return HandleAccessGroupChat(dataSubjectId, currentDataNodeLocator, obj)
 	case string(MessageDataType):
-		message := &Message{}
-		err := mapstructure.Decode(obj, message)
-		if err != nil {
-			panic(err)
-		}
-		return message.HandleAccess(dataSubjectId, currentDataNodeLocator)
+		return HandleAccessMessage(dataSubjectId, currentDataNodeLocator, obj)
 	default:
 		return nil
 	}
 }
 
-func (u *User) HandleAccess(dataSubjectId string, currentDataNodeLocator pal.Locator) map[string]interface{} {
+func HandleAccessUser(dataSubjectId string, currentDataNodeLocator pal.Locator, obj pal.DatabaseObject) map[string]interface{} {
 	data := make(map[string]interface{})
 
-	data["Name"] = u.Name
+	data["Name"] = obj["name"]
 	data["Groupchats"] = make([]pal.Locator, 0)
-	for _, id := range u.GCs {
+	for _, id := range obj["gcs"].([]interface{}) {
+		id := id.(string)
 		data["Groupchats"] = append(data["Groupchats"].([]pal.Locator), pal.Locator{
 			LocatorType:    pal.Document,
 			DataType:       string(GroupChatDataType),
@@ -46,11 +31,13 @@ func (u *User) HandleAccess(dataSubjectId string, currentDataNodeLocator pal.Loc
 			DocIDs:         []string{id},
 		})
 	}
+	// data["DirectMessages"] = make(map[string]pal.Locator)
+	// for id, _ := range obj["dms"].(map[string]interface{}) {
 
 	return data
 }
 
-func (g *GroupChat) HandleAccess(dataSubjectId string, currentDataNodeLocator pal.Locator) map[string]interface{} {
+func HandleAccessGroupChat(dataSubjectId string, currentDataNodeLocator pal.Locator, obj pal.DatabaseObject) map[string]interface{} {
 	data := make(map[string]interface{})
 
 	data["Messages"] = pal.Locator{
@@ -70,11 +57,11 @@ func (g *GroupChat) HandleAccess(dataSubjectId string, currentDataNodeLocator pa
 	return data
 }
 
-func (m *Message) HandleAccess(dataSubjectId string, currentDataNodeLocator pal.Locator) map[string]interface{} {
+func HandleAccessMessage(dataSubjectId string, currentDataNodeLocator pal.Locator, obj pal.DatabaseObject) map[string]interface{} {
 	data := make(map[string]interface{})
 
-	data["Content"] = m.Content
-	data["Timestamp"] = m.Timestamp
+	data["Content"] = obj["content"]
+	data["Timestamp"] = obj["timestamp"]
 
 	return data
 }
