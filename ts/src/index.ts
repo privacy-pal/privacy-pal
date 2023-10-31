@@ -1,2 +1,2 @@
 export * from "./client";
-export * from "./model";
+export { HandleAccessFunc, HandleDeletionFunc, Locator, Query, LocatorType } from "./model";
