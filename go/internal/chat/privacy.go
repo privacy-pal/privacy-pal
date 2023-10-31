@@ -11,23 +11,23 @@ const (
 	MessageDataType       = "message"
 )
 
-func HandleAccess(dataSubjectId string, currentDataNodeLocator pal.Locator, dbObj pal.DatabaseObject) map[string]interface{} {
-	switch currentDataNodeLocator.DataType {
+func HandleAccess(dataSubjectId string, currentDbObjLocator pal.Locator, dbObj pal.DatabaseObject) map[string]interface{} {
+	switch currentDbObjLocator.DataType {
 	case UserDataType:
-		return HandleAccessUser(dataSubjectId, currentDataNodeLocator, dbObj)
+		return HandleAccessUser(dataSubjectId, currentDbObjLocator, dbObj)
 	case GroupChatDataType:
-		return HandleAccessGroupChat(dataSubjectId, currentDataNodeLocator, dbObj)
+		return HandleAccessGroupChat(dataSubjectId, currentDbObjLocator, dbObj)
 	case MessageDataType:
-		return HandleAccessMessage(dataSubjectId, currentDataNodeLocator, dbObj)
+		return HandleAccessMessage(dataSubjectId, currentDbObjLocator, dbObj)
 	case DirectMessageDataType:
-		return HandleAccessDirectMessage(dataSubjectId, currentDataNodeLocator, dbObj)
+		return HandleAccessDirectMessage(dataSubjectId, currentDbObjLocator, dbObj)
 	default:
 		// TODO: should return error
 		return nil
 	}
 }
 
-func HandleAccessUser(dataSubjectId string, currentDataNodeLocator pal.Locator, dbObj pal.DatabaseObject) map[string]interface{} {
+func HandleAccessUser(dataSubjectId string, currentDbObjLocator pal.Locator, dbObj pal.DatabaseObject) map[string]interface{} {
 	data := make(map[string]interface{})
 
 	// TODO: include in documentation: you can access the id in 2 ways
@@ -35,7 +35,7 @@ func HandleAccessUser(dataSubjectId string, currentDataNodeLocator pal.Locator, 
 		data["Name"] = dbObj["name"]
 		return data
 	}
-	// if currentDataNodeLocator.DocIDs[len(currentDataNodeLocator.DocIDs)-1] != dataSubjectId {
+	// if currentDbObjLocator.DocIDs[len(currentDbObjLocator.DocIDs)-1] != dataSubjectId {
 	// 	data["Name"] = dbObj["name"]
 	// 	return data
 	// }
@@ -66,14 +66,14 @@ func HandleAccessUser(dataSubjectId string, currentDataNodeLocator pal.Locator, 
 	return data
 }
 
-func HandleAccessGroupChat(dataSubjectId string, currentDataNodeLocator pal.Locator, dbObj pal.DatabaseObject) map[string]interface{} {
+func HandleAccessGroupChat(dataSubjectId string, currentDbObjLocator pal.Locator, dbObj pal.DatabaseObject) map[string]interface{} {
 	data := make(map[string]interface{})
 
 	data["Messages"] = pal.Locator{
 		LocatorType:    pal.Collection,
 		DataType:       MessageDataType,
-		CollectionPath: append(currentDataNodeLocator.CollectionPath, "messages"),
-		DocIDs:         currentDataNodeLocator.DocIDs,
+		CollectionPath: append(currentDbObjLocator.CollectionPath, "messages"),
+		DocIDs:         currentDbObjLocator.DocIDs,
 		Queries: []pal.Query{
 			{
 				Path:  "userId",
@@ -86,7 +86,7 @@ func HandleAccessGroupChat(dataSubjectId string, currentDataNodeLocator pal.Loca
 	return data
 }
 
-func HandleAccessMessage(dataSubjectId string, currentDataNodeLocator pal.Locator, dbObj pal.DatabaseObject) map[string]interface{} {
+func HandleAccessMessage(dataSubjectId string, currentDbObjLocator pal.Locator, dbObj pal.DatabaseObject) map[string]interface{} {
 	data := make(map[string]interface{})
 
 	data["Content"] = dbObj["content"]
@@ -95,7 +95,7 @@ func HandleAccessMessage(dataSubjectId string, currentDataNodeLocator pal.Locato
 	return data
 }
 
-func HandleAccessDirectMessage(dataSubjectId string, currentDataNodeLocator pal.Locator, dbObj pal.DatabaseObject) map[string]interface{} {
+func HandleAccessDirectMessage(dataSubjectId string, currentDbObjLocator pal.Locator, dbObj pal.DatabaseObject) map[string]interface{} {
 	data := make(map[string]interface{})
 
 	var otherUserId string
@@ -114,8 +114,8 @@ func HandleAccessDirectMessage(dataSubjectId string, currentDataNodeLocator pal.
 	data["Messages"] = pal.Locator{
 		LocatorType:    pal.Collection,
 		DataType:       MessageDataType,
-		CollectionPath: append(currentDataNodeLocator.CollectionPath, "messages"),
-		DocIDs:         currentDataNodeLocator.DocIDs,
+		CollectionPath: append(currentDbObjLocator.CollectionPath, "messages"),
+		DocIDs:         currentDbObjLocator.DocIDs,
 		Queries: []pal.Query{
 			{
 				Path:  "userId",
