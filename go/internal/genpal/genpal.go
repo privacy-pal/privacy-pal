@@ -45,11 +45,11 @@ func generateHandleAccess(typenames []string) (ret string) {
 	ret += ")\n\n"
 
 	// generate handle access function
-	ret += "func HandleAccess(dataSubjectId string, currentDataNodeLocator pal.Locator, dbObj pal.DatabaseObject) map[string]interface{} {\n"
-	ret += "switch currentDataNodeLocator.DataType {\n"
+	ret += "func HandleAccess(dataSubjectId string, currentDbObjLocator pal.Locator, dbObj pal.DatabaseObject) map[string]interface{} {\n"
+	ret += "switch currentDbObjLocator.DataType {\n"
 	for _, typename := range typenames {
 		ret += fmt.Sprintf("case %sDataType:\n", toCamelCase(typename))
-		ret += fmt.Sprintf("return HandleAccess%s(dataSubjectId, currentDataNodeLocator, dbObj)\n", toCamelCase(typename))
+		ret += fmt.Sprintf("return HandleAccess%s(dataSubjectId, currentDbObjLocator, dbObj)\n", toCamelCase(typename))
 	}
 	ret += "default:\n"
 	ret += "return nil\n"
@@ -60,7 +60,7 @@ func generateHandleAccess(typenames []string) (ret string) {
 }
 
 func generateHandleAccessForType(typename string, dataNodeProperty *DataNodeProperty) (ret string) {
-	ret += "func HandleAccess" + toCamelCase(typename) + "(dataSubjectId string, currentDataNodeLocator pal.Locator, dbObj pal.DatabaseObject) map[string]interface{} {\n"
+	ret += "func HandleAccess" + toCamelCase(typename) + "(dataSubjectId string, currentDbObjLocator pal.Locator, dbObj pal.DatabaseObject) map[string]interface{} {\n"
 	// only generate function headers
 	if dataNodeProperty == nil {
 		ret += "return nil\n"
@@ -140,8 +140,8 @@ func generateHandleAccessForType(typename string, dataNodeProperty *DataNodeProp
 				`data["%s"] = pal.Locator{
 					LocatorType:           %s,
 					DataType:       "%s",
-					CollectionPath: append(currentDataNodeLocator.CollectionPath, "%s"),
-					DocIDs:         currentDataNodeLocator.DocIDs,`+"\n",
+					CollectionPath: append(currentDbObjLocator.CollectionPath, "%s"),
+					DocIDs:         currentDbObjLocator.DocIDs,`+"\n",
 				field.ExportedName,
 				locatorTypeStr,
 				dataType,

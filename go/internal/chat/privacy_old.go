@@ -5,29 +5,29 @@ import (
 	pal "github.com/privacy-pal/privacy-pal/pkg"
 )
 
-func HandleAccessOld(dataSubjectId string, currentDataNodeLocator pal.Locator, obj pal.DatabaseObject) map[string]interface{} {
-	switch currentDataNodeLocator.DataType {
+func HandleAccessOld(dataSubjectId string, currentDbObjLocator pal.Locator, obj pal.DatabaseObject) map[string]interface{} {
+	switch currentDbObjLocator.DataType {
 	case string(UserDataType):
 		user := &User{}
 		err := mapstructure.Decode(obj, user)
 		if err != nil {
 			panic(err)
 		}
-		return user.HandleAccess(dataSubjectId, currentDataNodeLocator)
+		return user.HandleAccess(dataSubjectId, currentDbObjLocator)
 	case string(GroupChatDataType):
 		groupChat := &GroupChat{}
 		err := mapstructure.Decode(obj, groupChat)
 		if err != nil {
 			panic(err)
 		}
-		return groupChat.HandleAccess(dataSubjectId, currentDataNodeLocator)
+		return groupChat.HandleAccess(dataSubjectId, currentDbObjLocator)
 	case string(MessageDataType):
 		message := &Message{}
 		err := mapstructure.Decode(obj, message)
 		if err != nil {
 			panic(err)
 		}
-		return message.HandleAccess(dataSubjectId, currentDataNodeLocator)
+		return message.HandleAccess(dataSubjectId, currentDbObjLocator)
 	default:
 		return nil
 	}
@@ -35,7 +35,7 @@ func HandleAccessOld(dataSubjectId string, currentDataNodeLocator pal.Locator, o
 
 // TODO: in documentation
 // You can also make your structs implement the handle access function, which allows you to access the data in the object
-func (u *User) HandleAccess(dataSubjectId string, currentDataNodeLocator pal.Locator) map[string]interface{} {
+func (u *User) HandleAccess(dataSubjectId string, currentDbObjLocator pal.Locator) map[string]interface{} {
 	data := make(map[string]interface{})
 
 	data["Name"] = u.Name
@@ -52,14 +52,14 @@ func (u *User) HandleAccess(dataSubjectId string, currentDataNodeLocator pal.Loc
 	return data
 }
 
-func (g *GroupChat) HandleAccess(dataSubjectId string, currentDataNodeLocator pal.Locator) map[string]interface{} {
+func (g *GroupChat) HandleAccess(dataSubjectId string, currentDbObjLocator pal.Locator) map[string]interface{} {
 	data := make(map[string]interface{})
 
 	data["Messages"] = pal.Locator{
 		LocatorType:    pal.Collection,
 		DataType:       string(MessageDataType),
-		CollectionPath: append(currentDataNodeLocator.CollectionPath, "messages"),
-		DocIDs:         currentDataNodeLocator.DocIDs,
+		CollectionPath: append(currentDbObjLocator.CollectionPath, "messages"),
+		DocIDs:         currentDbObjLocator.DocIDs,
 		Queries: []pal.Query{
 			{
 				Path:  "userId",
@@ -72,7 +72,7 @@ func (g *GroupChat) HandleAccess(dataSubjectId string, currentDataNodeLocator pa
 	return data
 }
 
-func (m *Message) HandleAccess(dataSubjectId string, currentDataNodeLocator pal.Locator) map[string]interface{} {
+func (m *Message) HandleAccess(dataSubjectId string, currentDbObjLocator pal.Locator) map[string]interface{} {
 	data := make(map[string]interface{})
 
 	data["Content"] = m.Content
