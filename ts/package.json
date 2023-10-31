@@ -1,4 +1,26 @@
 {
+  "name": "privacy-pal",
+  "version": "1.0.0",
+  "main": "dist/src/index.js",
+  "types": "dist/src/index.d.ts",
+  "scripts": {
+    "build": "tsc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/privacy-pal/privacy-pal.git"
+  },
+  "keywords": [
+    "privacy",
+    "firestore"
+  ],
+  "author": "Jenny Yu, Tianren Dong, Yiran Shi",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/privacy-pal/privacy-pal/issues"
+  },
+  "homepage": "https://github.com/privacy-pal/privacy-pal#readme",
+  "description": "",
   "dependencies": {
     "@firebase/firestore": "^4.3.0",
     "dotenv": "^16.3.1",
