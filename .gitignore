@@ -1,4 +1,4 @@
 **/.DS_Store
 **/.env
 ts/node_modules/
-ts/**/*.js
+ts/dist/
