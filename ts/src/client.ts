@@ -1,10 +1,8 @@
 
 import { Firestore } from 'firebase-admin/firestore';
-import { getDocumentFromFirestore, getDocumentsFromFirestore } from "./firestore";
-import { FirestoreLocator, HandleAccessFunc, MongoLocator } from './model';
-import { Locator, isLocator, validateLocator } from "./model";
 import { MongoClient } from 'mongodb';
 import Database from './database';
+import { FirestoreLocator, HandleAccessFunc, MongoLocator, isLocator, validateLocator } from './model';
 
 class PrivacyPalClient<T extends FirestoreLocator | MongoLocator>{
 
@@ -27,7 +25,7 @@ class PrivacyPalClient<T extends FirestoreLocator | MongoLocator>{
         // TODO: maybe make all timestamp values human readable
     }
 
-    processDeletionRequest(dataSubjectLocator: Locator, dataSubjectId: string) {
+    async processDeletionRequest(dataSubjectLocator: T, dataSubjectId: string) {
 
     }
 

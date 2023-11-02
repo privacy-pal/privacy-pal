@@ -1,5 +1,5 @@
 import { Filter } from "firebase-admin/firestore";
-import { FirestoreLocator, Locator, LocatorType } from "../../src/model";
+import { FirestoreLocator, Locator } from "../../src/model";
 import GroupChat from "./model/gc";
 import Message from "./model/message";
 import { FirestoreCollections } from "./model/shared";
@@ -23,7 +23,6 @@ function handleAccessGroupChat(dataSubjectId: string, locator: FirestoreLocator,
         messages: {
             dataType: 'message',
             singleDocument: false,
-            locatorType: LocatorType.Collection,
             collectionPath: [...locator.collectionPath, FirestoreCollections.Messages],
             docIds: locator.docIds,
             queries: [Filter.where('userID', '==', dataSubjectId)]
@@ -38,7 +37,6 @@ function handleAccessUser(dataSubjectId: string, locator: FirestoreLocator, obj:
             return {
                 dataType: 'groupChat',
                 singleDocument: true,
-                locatorType: LocatorType.Document,
                 collectionPath: [FirestoreCollections.GroupChat],
                 docIds: [gc],
             }

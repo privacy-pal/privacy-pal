@@ -1,9 +1,9 @@
+import PrivacyPalClient from "../../src/client";
+import { FirestoreLocator } from "../../src/model";
+import { db } from "../firestore";
 import { GetGroupChat } from "./firestore/gc";
 import { CreateUser } from "./firestore/user";
 import { JoinQuitAction } from "./model/shared";
-import PrivacyPalClient from "../../src/client";
-import { db } from "../firestore";
-import { FirestoreLocator, Locator, LocatorType } from "../../src/model";
 import handleAccess from "./privacy";
 
 async function test1() {
@@ -47,7 +47,6 @@ async function test1() {
     const dataSubjectLocator: FirestoreLocator = {
         dataType: 'user',
         singleDocument: true,
-        locatorType: LocatorType.Document,
         collectionPath: ['users'],
         docIds: [user1.id]
     }
