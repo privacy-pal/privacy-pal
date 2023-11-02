@@ -1,25 +1,27 @@
 
 import { Firestore } from 'firebase-admin/firestore';
 import { getDocumentFromFirestore, getDocumentsFromFirestore } from "./firestore";
-import { HandleAccessFunc } from './model';
+import { FirestoreLocator, HandleAccessFunc, MongoLocator } from './model';
 import { Locator, isLocator, validateLocator } from "./model";
+import { MongoClient } from 'mongodb';
+import Database from './database';
 
-class PrivacyPalClient {
+class PrivacyPalClient<T extends FirestoreLocator | MongoLocator>{
 
-    db: Firestore;
+    db: Database;
 
-    constructor(db: Firestore) {
-        this.db = db;
+    constructor(client: Firestore | MongoClient) {
+        this.db = new Database(client);
     }
 
-    async processAccessRequest(handleAccess: HandleAccessFunc, dataSubjectLocator: Locator, dataSubjectId: string) {
+    async processAccessRequest(handleAccess: HandleAccessFunc<T>, dataSubjectLocator: T, dataSubjectId: string) {
         console.log("Processing access request for data subject " + dataSubjectId);
 
-        if (dataSubjectLocator.locatorType != "document") {
-            throw new Error("Data subject locator type must be document");
+        if (!dataSubjectLocator.singleDocument) {
+            throw new Error("Data subject locator must be a single document");
         }
 
-        const dataSubject = await getDocumentFromFirestore(this.db, dataSubjectLocator);
+        const dataSubject = await this.db.getDocument(dataSubjectLocator);
         const data = await this.processAccessRequestHelper(handleAccess, dataSubject, dataSubjectId, dataSubjectLocator);
         return data;
         // TODO: maybe make all timestamp values human readable
@@ -29,14 +31,20 @@ class PrivacyPalClient {
 
     }
 
-    private async processAccessRequestHelper(handleAccess: HandleAccessFunc, dataNode: any, dataSubjectID: string, dataNodeLocator: Locator): Promise<Record<string, any>> {
+    private async processAccessRequestHelper(
+        handleAccess: HandleAccessFunc<T>,
+        dataNode: any,
+        dataSubjectID: string,
+        dataNodeLocator: T
+    ): Promise<Record<string, any>> {
+
         const data = handleAccess(dataSubjectID, dataNodeLocator, dataNode);
         let report: Record<string, any> = {};
 
         for (const [key, value] of Object.entries(data)) {
             if (isLocator(value)) {
                 // if locator, recursively process
-                const retData = await this.processLocator(handleAccess, value, dataSubjectID);
+                const retData = await this.processLocator(handleAccess, value as T, dataSubjectID);
                 report[key] = retData;
             } else if (value instanceof Array && value.length > 0 && isLocator(value[0])) {
                 // if locator slice, recursively process each locator
@@ -61,20 +69,18 @@ class PrivacyPalClient {
         return report;
     }
 
-    private async processLocator(handleAccess: HandleAccessFunc, locator: Locator, dataSubjectID: string): Promise<Record<string, any>> {
+    private async processLocator(handleAccess: HandleAccessFunc<T>, locator: T, dataSubjectID: string): Promise<Record<string, any>> {
         const err = validateLocator(locator);
         if (err) {
             throw err;
         }
 
-        if (locator.locatorType == "document") {
-            const dataNode = await getDocumentFromFirestore(this.db, locator);
+        if (locator.singleDocument) {
+            const dataNode = await this.db.getDocument(locator);
             const retData = await this.processAccessRequestHelper(handleAccess, dataNode, dataSubjectID, locator);
             return retData;
-        }
-
-        if (locator.locatorType == "collection") {
-            const dataNodes = await getDocumentsFromFirestore(this.db, locator);
+        } else {
+            const dataNodes = await this.db.getDocuments(locator);
             const retData: Record<string, any>[] = [];
             for (var dataNode of dataNodes) {
                 const currDataNodeData = await this.processAccessRequestHelper(handleAccess, dataNode, dataSubjectID, locator);
@@ -82,8 +88,6 @@ class PrivacyPalClient {
             }
             return retData;
         }
-
-        throw new Error("Invalid locator type");
     }
 }
 

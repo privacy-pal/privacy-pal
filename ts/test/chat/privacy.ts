@@ -1,10 +1,11 @@
-import { Locator, LocatorType } from "../../src/model";
+import { Filter } from "firebase-admin/firestore";
+import { FirestoreLocator, Locator, LocatorType } from "../../src/model";
 import GroupChat from "./model/gc";
 import Message from "./model/message";
 import { FirestoreCollections } from "./model/shared";
 import User from "./model/user";
 
-export default function handleAccess(dataSubjectId: string, locator: Locator, obj: any): Record<string, any> {
+export default function handleAccess(dataSubjectId: string, locator: FirestoreLocator, obj: any): Record<string, any> {
     switch (locator.dataType) {
         case 'user':
             return handleAccessUser(dataSubjectId, locator, obj as User);
@@ -17,29 +18,27 @@ export default function handleAccess(dataSubjectId: string, locator: Locator, ob
     }
 }
 
-function handleAccessGroupChat(dataSubjectId: string, locator: Locator, obj: GroupChat): Record<string, any> {
+function handleAccessGroupChat(dataSubjectId: string, locator: FirestoreLocator, obj: GroupChat): Record<string, any> {
     return {
         messages: {
-            locatorType: LocatorType.Collection,
             dataType: 'message',
+            singleDocument: false,
+            locatorType: LocatorType.Collection,
             collectionPath: [...locator.collectionPath, FirestoreCollections.Messages],
             docIds: locator.docIds,
-            queries: [{
-                path: 'userID',
-                op: '==',
-                value: dataSubjectId
-            }]
-        } as Locator
+            queries: [Filter.where('userID', '==', dataSubjectId)]
+        } as FirestoreLocator
     };
 };
 
-function handleAccessUser(dataSubjectId: string, locator: Locator, obj: User): Record<string, any> {
+function handleAccessUser(dataSubjectId: string, locator: FirestoreLocator, obj: User): Record<string, any> {
     return {
         name: obj.name,
-        groupChats: obj.gcs.map((gc: string): Locator => {
+        groupChats: obj.gcs.map((gc: string): FirestoreLocator => {
             return {
-                locatorType: LocatorType.Document,
                 dataType: 'groupChat',
+                singleDocument: true,
+                locatorType: LocatorType.Document,
                 collectionPath: [FirestoreCollections.GroupChat],
                 docIds: [gc],
             }

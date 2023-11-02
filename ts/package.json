@@ -2,7 +2,8 @@
   "dependencies": {
     "@firebase/firestore": "^4.3.0",
     "dotenv": "^16.3.1",
-    "firebase-admin": "^11.11.0"
+    "firebase-admin": "^11.11.0",
+    "mongodb": "^6.2.0"
   },
   "devDependencies": {
     "@types/node": "^20.8.9"

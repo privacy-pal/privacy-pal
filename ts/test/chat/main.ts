@@ -3,7 +3,7 @@ import { CreateUser } from "./firestore/user";
 import { JoinQuitAction } from "./model/shared";
 import PrivacyPalClient from "../../src/client";
 import { db } from "../firestore";
-import { Locator, LocatorType } from "../../src/model";
+import { FirestoreLocator, Locator, LocatorType } from "../../src/model";
 import handleAccess from "./privacy";
 
 async function test1() {
@@ -43,10 +43,11 @@ async function test1() {
     // user 1 sends another message to groupchat
     await user1.SendMessageToGroupChat(groupChat.id, 'hello again');
 
-    const privacyPalClient: PrivacyPalClient = new PrivacyPalClient(db);
-    const dataSubjectLocator: Locator = {
-        locatorType: LocatorType.Document,
+    const privacyPalClient = new PrivacyPalClient<FirestoreLocator>(db);
+    const dataSubjectLocator: FirestoreLocator = {
         dataType: 'user',
+        singleDocument: true,
+        locatorType: LocatorType.Document,
         collectionPath: ['users'],
         docIds: [user1.id]
     }
