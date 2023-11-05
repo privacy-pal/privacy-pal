@@ -6,5 +6,5 @@ export async function getDocumentFromMongo(db: MongoClient, locator: MongoLocato
 }
 
 export async function getDocumentsFromMongo(db: MongoClient, locator: MongoLocator): Promise<any> {
-    return db.db().collection(locator.collection).find(locator.filter)
+    return db.db().collection(locator.collection).find(locator.filter).toArray()
 }

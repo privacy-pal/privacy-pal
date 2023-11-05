@@ -229,7 +229,7 @@ export default class User {
             }
 
             // Create a message
-            const newMessage = new Message(this.id, message, new Date());
+            const newMessage = new Message(this.id, message, new Date(), chatID);
 
             if (TestDatabase.database === "firestore") {
 
@@ -240,17 +240,11 @@ export default class User {
                     .add(Object.assign({}, newMessage));
 
                 newMessage.id = ref.id;
+
             } else if (TestDatabase.database === "mongo") {
-                // Write the message to the Mongo subcollection
-                await TestDatabase.mongoClient.db().collection(FirestoreCollections.GroupChat)
-                    .updateOne(
-                        { _id: new ObjectId(chatID) },
-                        {
-                            $push: {
-                                messages: newMessage,
-                            },
-                        }
-                    );
+                // Write the message to a Mongo collection
+                await TestDatabase.mongoClient.db().collection(FirestoreCollections.Messages)
+                    .insertOne(Object.assign({}, newMessage));
             } else {
                 throw new Error("Database not initialized");
             }
@@ -274,7 +268,7 @@ export default class User {
             }
 
             // Create a message
-            const newMessage = new Message(this.id, message, new Date());
+            const newMessage = new Message(this.id, message, new Date(), chatID);
 
             if (TestDatabase.database === "firestore") {
 
@@ -286,16 +280,9 @@ export default class User {
 
                 newMessage.id = ref.id;
             } else if (TestDatabase.database === "mongo") {
-                // Write the message to the Mongo subcollection
-                await TestDatabase.mongoClient.db().collection(FirestoreCollections.DirectMessages)
-                    .updateOne(
-                        { _id: new ObjectId(chatID) },
-                        {
-                            $push: {
-                                messages: newMessage,
-                            },
-                        }
-                    );
+                // Write the message to a Mongo collection
+                await TestDatabase.mongoClient.db().collection(FirestoreCollections.Messages)
+                    .insertOne(Object.assign({}, newMessage));
             } else {
                 throw new Error("Database not initialized");
             }

@@ -5,7 +5,8 @@ import TestDatabase from "../testDB";
 import { GetGroupChat } from "./firestore/gc";
 import { CreateUser } from "./firestore/user";
 import { FirestoreCollections, JoinQuitAction } from "./model/shared";
-import handleAccess from "./privacy";
+import handleAccessMongo from "./privacyMongo";
+import handleAccessFirestore from "./privacyFirestore";
 
 async function testMongo() {
     await TestDatabase.initializeDB("mongo");
@@ -58,7 +59,7 @@ async function testMongo() {
         }
     }
 
-    const res = await privacyPalClient.processAccessRequest(handleAccess, dataSubjectLocator, user1.id)
+    const res = await privacyPalClient.processAccessRequest(handleAccessMongo, dataSubjectLocator, user1.id)
     console.log(JSON.stringify(res))
 }
 
@@ -112,8 +113,9 @@ async function testFirestore() {
         docIds: [user1.id]
     }
 
-    const res = await privacyPalClient.processAccessRequest(handleAccess, dataSubjectLocator, user1.id)
+    const res = await privacyPalClient.processAccessRequest(handleAccessFirestore, dataSubjectLocator, user1.id)
     console.log(JSON.stringify(res))
 }
 
-testMongo();
+// testMongo();
+testFirestore();

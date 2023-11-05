@@ -5,7 +5,7 @@ import Message from "./model/message";
 import { FirestoreCollections } from "./model/shared";
 import User from "./model/user";
 
-export default function handleAccess(dataSubjectId: string, locator: FirestoreLocator, obj: any): Record<string, any> {
+export default function handleAccessFirestore(dataSubjectId: string, locator: FirestoreLocator, obj: any): Record<string, any> {
     switch (locator.dataType) {
         case 'user':
             return handleAccessUser(dataSubjectId, locator, obj as User);
