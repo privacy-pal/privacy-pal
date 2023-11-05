@@ -1,12 +1,22 @@
 import PrivacyPalClient from "../../src/client";
-import { FirestoreLocator } from "../../src/model";
-import { db } from "../firestore";
+import { FirestoreLocator, MongoLocator } from "../../src/model";
+import TestDatabase from "../testDB";
 import { GetGroupChat } from "./firestore/gc";
 import { CreateUser } from "./firestore/user";
 import { JoinQuitAction } from "./model/shared";
 import handleAccess from "./privacy";
 
+async function randomTest() {
+    await TestDatabase.initializeDB("mongo");
+
+    // create user 1
+    const user1 = await CreateUser('user1');
+    console.log('Created User:', user1);
+}
+
 async function test1() {
+    await TestDatabase.initializeDB("firestore");
+
     // create user 1
     const user1 = await CreateUser('user1');
     console.log('Created User:', user1);
@@ -43,7 +53,12 @@ async function test1() {
     // user 1 sends another message to groupchat
     await user1.SendMessageToGroupChat(groupChat.id, 'hello again');
 
-    const privacyPalClient = new PrivacyPalClient<FirestoreLocator>(db);
+
+    const privacyPalClient = new PrivacyPalClient<FirestoreLocator>(TestDatabase.firestoreClient);
+
+    // TestDatabase.initializeDB("mongo");
+    // const privacyPalClient = new PrivacyPalClient<MongoLocator>(TestDatabase.mongoClient);
+
     const dataSubjectLocator: FirestoreLocator = {
         dataType: 'user',
         singleDocument: true,
@@ -55,4 +70,4 @@ async function test1() {
     console.log(JSON.stringify(res))
 }
 
-test1();
+randomTest();

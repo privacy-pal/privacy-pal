@@ -1,10 +1,10 @@
-import { db } from "../../firestore";
 import { FirestoreCollections, doesNotExistError } from "../model/shared";
 import GroupChat from "../model/gc";
+import TestDatabase from "../../testDB";
 
 export async function GetGroupChat(ID: string): Promise<GroupChat | null> {
     try {
-        const doc = await db.collection(FirestoreCollections.GroupChat).doc(ID).get();
+        const doc = await TestDatabase.firestoreClient.collection(FirestoreCollections.GroupChat).doc(ID).get();
 
         if (!doc.exists) {
             throw new Error(doesNotExistError);

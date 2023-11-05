@@ -1,4 +1,4 @@
-import { Firestore, UpdateData } from 'firebase-admin/firestore';
+import { UpdateData } from 'firebase-admin/firestore';
 import { Filter } from 'mongodb';
 
 export type HandleAccessFunc<T extends FirestoreLocator | MongoLocator> =

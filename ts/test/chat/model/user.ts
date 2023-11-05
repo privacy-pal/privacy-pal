@@ -1,5 +1,4 @@
 import { FieldValue, UpdateData } from "firebase-admin/firestore";
-import { db } from "../../firestore";
 import { GetDirectMessage } from "../firestore/dm";
 import { GetGroupChat } from "../firestore/gc";
 import { GetUser } from "../firestore/user";
@@ -7,6 +6,7 @@ import DirectMessage from "./dm";
 import GroupChat from "./gc";
 import Message from "./message";
 import { FirestoreCollections, JoinQuitAction } from "./shared";
+import TestDatabase from "../../testDB";
 
 export default class User {
     id: string;
@@ -24,11 +24,11 @@ export default class User {
         const newChat = new GroupChat(this.id, []);
 
         try {
-            const ref = await db.collection(FirestoreCollections.GroupChat).add(Object.assign({}, newChat));
+            const ref = await TestDatabase.firestoreClient.collection(FirestoreCollections.GroupChat).add(Object.assign({}, newChat));
             newChat.id = ref.id;
 
             // Add the group chat to the user
-            await db.collection(FirestoreCollections.Users).doc(this.id).set(
+            await TestDatabase.firestoreClient.collection(FirestoreCollections.Users).doc(this.id).set(
                 {
                     gcs: FieldValue.arrayUnion(newChat.id),
                 },
@@ -57,7 +57,7 @@ export default class User {
             }
 
             // Update the group chat
-            await db.collection(FirestoreCollections.GroupChat).doc(chatID).update(updates);
+            await TestDatabase.firestoreClient.collection(FirestoreCollections.GroupChat).doc(chatID).update(updates);
 
             // Update the user
             updates.length = 0; // Clear the updates array
@@ -68,7 +68,7 @@ export default class User {
                 updates.gcs = FieldValue.arrayRemove(chatID);
             }
 
-            await db.collection(FirestoreCollections.Users).doc(this.id).update(updates);
+            await TestDatabase.firestoreClient.collection(FirestoreCollections.Users).doc(this.id).update(updates);
 
         } catch (err) {
             throw new Error(`Error updating user or group chat: ${err}`);
@@ -94,11 +94,11 @@ export default class User {
 
             const newDM = new DirectMessage(this.id, user2ID);
 
-            const ref = await db.collection(FirestoreCollections.DirectMessages).add(Object.assign({}, newDM));
+            const ref = await TestDatabase.firestoreClient.collection(FirestoreCollections.DirectMessages).add(Object.assign({}, newDM));
             newDM.id = ref.id;
 
             // Add the DM to both users
-            await db.collection(FirestoreCollections.Users).doc(this.id).set(
+            await TestDatabase.firestoreClient.collection(FirestoreCollections.Users).doc(this.id).set(
                 {
                     dms: {
                         [user2ID]: newDM.id,
@@ -107,7 +107,7 @@ export default class User {
                 { merge: true }
             );
 
-            await db.collection(FirestoreCollections.Users).doc(user2ID).set(
+            await TestDatabase.firestoreClient.collection(FirestoreCollections.Users).doc(user2ID).set(
                 {
                     dms: {
                         [this.id]: newDM.id,
@@ -140,7 +140,7 @@ export default class User {
             const newMessage = new Message(this.id, message, new Date());
 
             // Write the message to the Firestore subcollection
-            const ref = await db.collection(FirestoreCollections.GroupChat)
+            const ref = await TestDatabase.firestoreClient.collection(FirestoreCollections.GroupChat)
                 .doc(chatID)
                 .collection(FirestoreCollections.Messages)
                 .add(Object.assign({}, newMessage));
@@ -169,7 +169,7 @@ export default class User {
             const newMessage = new Message(this.id, message, new Date());
 
             // Write the message to the Firestore subcollection
-            const ref = await db.collection(FirestoreCollections.DirectMessages)
+            const ref = await TestDatabase.firestoreClient.collection(FirestoreCollections.DirectMessages)
                 .doc(chatID)
                 .collection(FirestoreCollections.Messages)
                 .add(Object.assign({}, newMessage));

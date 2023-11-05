@@ -1,10 +1,10 @@
-import { db } from "../../firestore";
 import { FirestoreCollections, doesNotExistError } from "../model/shared";
 import DirectMessage from "../model/dm";
+import TestDatabase from "../../testDB";
 
 export async function GetDirectMessage(ID: string): Promise<DirectMessage | null> {
     try {
-        const doc = await db.collection(FirestoreCollections.Messages).doc(ID).get();
+        const doc = await TestDatabase.firestoreClient.collection(FirestoreCollections.Messages).doc(ID).get();
 
         if (!doc.exists) {
             throw new Error(doesNotExistError);
