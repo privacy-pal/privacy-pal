@@ -117,5 +117,6 @@ async function testFirestore() {
     console.log(JSON.stringify(res))
 }
 
-// testMongo();
-testFirestore();
+testMongo().then(() => TestDatabase.cleanupDB())
+// testFirestore().then(() => TestDatabase.cleanupDB())
+

@@ -30,4 +30,12 @@ export default class TestDatabase {
 
         TestDatabase.database = database;
     }
+
+    public static async cleanupDB() {
+        if (TestDatabase.database === "mongo") {
+            await TestDatabase.mongoClient.close();
+        } else if (TestDatabase.database === "firestore") {
+            await TestDatabase.firestoreClient.terminate();
+        }
+    }
 }
