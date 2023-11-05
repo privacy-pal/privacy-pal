@@ -1,11 +1,11 @@
-import { Filter } from "firebase-admin/firestore";
-import { FirestoreLocator, Locator } from "../../src/model";
+import { ObjectId } from "mongodb";
+import { MongoLocator } from "../../src/model";
 import GroupChat from "./model/gc";
 import Message from "./model/message";
 import { FirestoreCollections } from "./model/shared";
 import User from "./model/user";
 
-export default function handleAccess(dataSubjectId: string, locator: FirestoreLocator, obj: any): Record<string, any> {
+export default function handleAccess(dataSubjectId: string, locator: MongoLocator, obj: any): Record<string, any> {
     switch (locator.dataType) {
         case 'user':
             return handleAccessUser(dataSubjectId, locator, obj as User);
@@ -18,33 +18,36 @@ export default function handleAccess(dataSubjectId: string, locator: FirestoreLo
     }
 }
 
-function handleAccessGroupChat(dataSubjectId: string, locator: FirestoreLocator, obj: GroupChat): Record<string, any> {
+function handleAccessGroupChat(dataSubjectId: string, locator: MongoLocator, obj: GroupChat): Record<string, any> {
     return {
         messages: {
             dataType: 'message',
             singleDocument: false,
-            collectionPath: [...locator.collectionPath, FirestoreCollections.Messages],
-            docIds: locator.docIds,
-            queries: [Filter.where('userID', '==', dataSubjectId)]
-        } as FirestoreLocator
+            collection: FirestoreCollections.Messages,
+            filter: {
+                userID: dataSubjectId
+            }
+        } as MongoLocator
     };
 };
 
-function handleAccessUser(dataSubjectId: string, locator: FirestoreLocator, obj: User): Record<string, any> {
+function handleAccessUser(dataSubjectId: string, locator: MongoLocator, obj: User): Record<string, any> {
     return {
         name: obj.name,
-        groupChats: obj.gcs.map((gc: string): FirestoreLocator => {
+        groupChats: obj.gcs.map((gc: string): MongoLocator => {
             return {
                 dataType: 'groupChat',
                 singleDocument: true,
-                collectionPath: [FirestoreCollections.GroupChat],
-                docIds: [gc],
+                collection: FirestoreCollections.GroupChat,
+                filter: {
+                    _id: new ObjectId(gc)
+                }
             }
         })
     };
 }
 
-function handleAccessMessage(dataSubjectId: string, locator: Locator, obj: Message): Record<string, any> {
+function handleAccessMessage(dataSubjectId: string, locator: MongoLocator, obj: Message): Record<string, any> {
     return {
         content: obj.content,
         timestamp: obj.timestamp
