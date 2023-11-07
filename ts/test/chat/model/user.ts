@@ -1,12 +1,13 @@
 import { FieldValue, UpdateData } from "firebase-admin/firestore";
-import { db } from "../../firestore";
-import { GetDirectMessage } from "../firestore/dm";
-import { GetGroupChat } from "../firestore/gc";
-import { GetUser } from "../firestore/user";
+import { GetDirectMessage } from "../db/dm";
+import { GetGroupChat } from "../db/gc";
+import { GetUser } from "../db/user";
 import DirectMessage from "./dm";
 import GroupChat from "./gc";
 import Message from "./message";
 import { FirestoreCollections, JoinQuitAction } from "./shared";
+import TestDatabase from "../../testDB";
+import { ObjectId } from "mongodb";
 
 export default class User {
     id: string;
@@ -24,19 +25,39 @@ export default class User {
         const newChat = new GroupChat(this.id, []);
 
         try {
-            const ref = await db.collection(FirestoreCollections.GroupChat).add(Object.assign({}, newChat));
-            newChat.id = ref.id;
+            if (TestDatabase.database === "firestore") {
+                const ref = await TestDatabase.firestoreClient.collection(FirestoreCollections.GroupChat).add(Object.assign({}, newChat));
+                newChat.id = ref.id;
 
-            // Add the group chat to the user
-            await db.collection(FirestoreCollections.Users).doc(this.id).set(
-                {
-                    gcs: FieldValue.arrayUnion(newChat.id),
-                },
-                { merge: true }
-            );
+                // Add the group chat to the user
+                await TestDatabase.firestoreClient.collection(FirestoreCollections.Users).doc(this.id).set(
+                    {
+                        gcs: FieldValue.arrayUnion(newChat.id),
+                    },
+                    { merge: true }
+                );
 
-            this.gcs.push(newChat.id);
-            return newChat;
+                this.gcs.push(newChat.id);
+                return newChat;
+            } else if (TestDatabase.database === "mongo") {
+                const doc = await TestDatabase.mongoClient.db().collection(FirestoreCollections.GroupChat).insertOne(Object.assign({}, newChat));
+                newChat.id = doc.insertedId.toString();
+
+                // Add the group chat to the user
+                await TestDatabase.mongoClient.db().collection(FirestoreCollections.Users).updateOne(
+                    { _id: new ObjectId(this.id) },
+                    {
+                        $push: {
+                            gcs: newChat.id,
+                        },
+                    }
+                );
+
+                this.gcs.push(newChat.id);
+                return newChat;
+            } else {
+                throw new Error("Database not initialized");
+            }
         } catch (err) {
             throw new Error(`Error creating group chat: ${err}`);
         }
@@ -48,27 +69,68 @@ export default class User {
             await GetUser(this.id);
             await GetGroupChat(chatID);
 
-            const updates: UpdateData<{ [x: string]: any }> = {};
+            if (TestDatabase.database === "firestore") {
+                let updates: UpdateData<{ [x: string]: any }> = {};
 
-            if (action === JoinQuitAction.JoinChat) {
-                updates.users = FieldValue.arrayUnion(this.id)
-            } else if (action === JoinQuitAction.QuitChat) {
-                updates.users = FieldValue.arrayRemove(this.id)
+                if (action === JoinQuitAction.JoinChat) {
+                    updates.users = FieldValue.arrayUnion(this.id)
+                } else if (action === JoinQuitAction.QuitChat) {
+                    updates.users = FieldValue.arrayRemove(this.id)
+                }
+
+                // Update the group chat
+                await TestDatabase.firestoreClient.collection(FirestoreCollections.GroupChat).doc(chatID).update(updates);
+
+                // Update the user
+                updates = {};
+
+                if (action === JoinQuitAction.JoinChat) {
+                    updates.gcs = FieldValue.arrayUnion(chatID);
+                } else if (action === JoinQuitAction.QuitChat) {
+                    updates.gcs = FieldValue.arrayRemove(chatID);
+                }
+
+                await TestDatabase.firestoreClient.collection(FirestoreCollections.Users).doc(this.id).update(updates);
+
+            } else if (TestDatabase.database === "mongo") {
+                let updates: { [x: string]: any } = {};
+
+                if (action === JoinQuitAction.JoinChat) {
+                    updates.$push = {
+                        users: this.id,
+                    };
+                } else if (action === JoinQuitAction.QuitChat) {
+                    updates.$pull = {
+                        users: this.id,
+                    };
+                }
+
+                // Update the group chat
+                await TestDatabase.mongoClient.db().collection(FirestoreCollections.GroupChat).updateOne(
+                    { _id: new ObjectId(chatID) },
+                    updates
+                );
+
+                // Update the user
+                updates = {};
+
+                if (action === JoinQuitAction.JoinChat) {
+                    updates.$push = {
+                        gcs: chatID,
+                    };
+                } else if (action === JoinQuitAction.QuitChat) {
+                    updates.$pull = {
+                        gcs: chatID,
+                    };
+                }
+
+                await TestDatabase.mongoClient.db().collection(FirestoreCollections.Users).updateOne(
+                    { _id: new ObjectId(this.id) },
+                    updates
+                );
+            } else {
+                throw new Error("Database not initialized");
             }
-
-            // Update the group chat
-            await db.collection(FirestoreCollections.GroupChat).doc(chatID).update(updates);
-
-            // Update the user
-            updates.length = 0; // Clear the updates array
-
-            if (action === JoinQuitAction.JoinChat) {
-                updates.gcs = FieldValue.arrayUnion(chatID);
-            } else if (action === JoinQuitAction.QuitChat) {
-                updates.gcs = FieldValue.arrayRemove(chatID);
-            }
-
-            await db.collection(FirestoreCollections.Users).doc(this.id).update(updates);
 
         } catch (err) {
             throw new Error(`Error updating user or group chat: ${err}`);
@@ -94,29 +156,59 @@ export default class User {
 
             const newDM = new DirectMessage(this.id, user2ID);
 
-            const ref = await db.collection(FirestoreCollections.DirectMessages).add(Object.assign({}, newDM));
-            newDM.id = ref.id;
+            if (TestDatabase.database === "firestore") {
 
-            // Add the DM to both users
-            await db.collection(FirestoreCollections.Users).doc(this.id).set(
-                {
-                    dms: {
-                        [user2ID]: newDM.id,
+                const ref = await TestDatabase.firestoreClient.collection(FirestoreCollections.DirectMessages).add(Object.assign({}, newDM));
+                newDM.id = ref.id;
+
+                // Add the DM to both users
+                await TestDatabase.firestoreClient.collection(FirestoreCollections.Users).doc(this.id).set(
+                    {
+                        dms: {
+                            [user2ID]: newDM.id,
+                        },
                     },
-                },
-                { merge: true }
-            );
+                    { merge: true }
+                );
 
-            await db.collection(FirestoreCollections.Users).doc(user2ID).set(
-                {
-                    dms: {
-                        [this.id]: newDM.id,
+                await TestDatabase.firestoreClient.collection(FirestoreCollections.Users).doc(user2ID).set(
+                    {
+                        dms: {
+                            [this.id]: newDM.id,
+                        },
                     },
-                },
-                { merge: true }
-            );
+                    { merge: true }
+                );
 
-            return newDM;
+                return newDM;
+
+            } else if (TestDatabase.database === "mongo") {
+                const doc = await TestDatabase.mongoClient.db().collection(FirestoreCollections.DirectMessages).insertOne(Object.assign({}, newDM));
+                newDM.id = doc.insertedId.toString();
+
+                // Add the DM to both users
+                await TestDatabase.mongoClient.db().collection(FirestoreCollections.Users).updateOne(
+                    { _id: new ObjectId(this.id) },
+                    {
+                        $set: {
+                            [`dms.${user2ID}`]: newDM.id,
+                        },
+                    }
+                );
+
+                await TestDatabase.mongoClient.db().collection(FirestoreCollections.Users).updateOne(
+                    { _id: new ObjectId(user2ID) },
+                    {
+                        $set: {
+                            [`dms.${this.id}`]: newDM.id,
+                        },
+                    }
+                );
+
+                return newDM;
+            } else {
+                throw new Error("Database not initialized");
+            }
         } catch (err) {
             throw new Error(`Error creating direct message: ${err}`);
         }
@@ -137,15 +229,25 @@ export default class User {
             }
 
             // Create a message
-            const newMessage = new Message(this.id, message, new Date());
+            const newMessage = new Message(this.id, message, new Date(), chatID);
 
-            // Write the message to the Firestore subcollection
-            const ref = await db.collection(FirestoreCollections.GroupChat)
-                .doc(chatID)
-                .collection(FirestoreCollections.Messages)
-                .add(Object.assign({}, newMessage));
+            if (TestDatabase.database === "firestore") {
 
-            newMessage.id = ref.id;
+                // Write the message to the Firestore subcollection
+                const ref = await TestDatabase.firestoreClient.collection(FirestoreCollections.GroupChat)
+                    .doc(chatID)
+                    .collection(FirestoreCollections.Messages)
+                    .add(Object.assign({}, newMessage));
+
+                newMessage.id = ref.id;
+
+            } else if (TestDatabase.database === "mongo") {
+                // Write the message to a Mongo collection
+                await TestDatabase.mongoClient.db().collection(FirestoreCollections.Messages)
+                    .insertOne(Object.assign({}, newMessage));
+            } else {
+                throw new Error("Database not initialized");
+            }
         } catch (err) {
             throw new Error(`Error creating message: ${err}`);
         }
@@ -166,15 +268,24 @@ export default class User {
             }
 
             // Create a message
-            const newMessage = new Message(this.id, message, new Date());
+            const newMessage = new Message(this.id, message, new Date(), chatID);
 
-            // Write the message to the Firestore subcollection
-            const ref = await db.collection(FirestoreCollections.DirectMessages)
-                .doc(chatID)
-                .collection(FirestoreCollections.Messages)
-                .add(Object.assign({}, newMessage));
+            if (TestDatabase.database === "firestore") {
 
-            newMessage.id = ref.id;
+                // Write the message to the Firestore subcollection
+                const ref = await TestDatabase.firestoreClient.collection(FirestoreCollections.DirectMessages)
+                    .doc(chatID)
+                    .collection(FirestoreCollections.Messages)
+                    .add(Object.assign({}, newMessage));
+
+                newMessage.id = ref.id;
+            } else if (TestDatabase.database === "mongo") {
+                // Write the message to a Mongo collection
+                await TestDatabase.mongoClient.db().collection(FirestoreCollections.Messages)
+                    .insertOne(Object.assign({}, newMessage));
+            } else {
+                throw new Error("Database not initialized");
+            }
         } catch (err) {
             throw new Error(`Error creating message: ${err}`);
         }

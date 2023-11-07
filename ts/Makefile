@@ -1,2 +1,2 @@
 run_test:
-	tsc test/chat/main.ts && node test/chat/main.js
+	tsc && node dist/test/chat/main.js
