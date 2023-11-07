@@ -25,7 +25,6 @@ export default function handleAccessMongo(dataSubjectId: string, locator: MongoL
 }
 
 function handleAccessGroupChat(dataSubjectId: string, locator: MongoLocator, obj: GroupChat): Record<string, any> {
-    console.log(obj)
     return {
         messages: {
             dataType: 'message',
