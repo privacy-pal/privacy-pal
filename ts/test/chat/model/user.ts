@@ -1,7 +1,7 @@
 import { FieldValue, UpdateData } from "firebase-admin/firestore";
-import { GetDirectMessage } from "../firestore/dm";
-import { GetGroupChat } from "../firestore/gc";
-import { GetUser } from "../firestore/user";
+import { GetDirectMessage } from "../db/dm";
+import { GetGroupChat } from "../db/gc";
+import { GetUser } from "../db/user";
 import DirectMessage from "./dm";
 import GroupChat from "./gc";
 import Message from "./message";
