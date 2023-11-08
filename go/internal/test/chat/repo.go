@@ -11,7 +11,7 @@ import (
 var firestoreClient *firestore.Client
 
 func init() {
-	err := godotenv.Load("../../.env")
+	err := godotenv.Load("../../../.env")
 	fmt.Println("Loaded .env file")
 	if err != nil {
 		panic(err)
