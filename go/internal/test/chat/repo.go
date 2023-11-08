@@ -21,7 +21,7 @@ func (u *User) CreateGroupChat() (chat *GroupChat, err error) {
 
 	ref, _, err := test.FirestoreClient.Collection(FirestoreGroupChatCollection).Add(test.Context, newChat)
 	if err != nil {
-		return nil, fmt.Errorf("error creating group chat: %v\n", err)
+		return nil, fmt.Errorf("error creating group chat: %v", err)
 	}
 	newChat.ID = ref.ID
 
@@ -31,7 +31,7 @@ func (u *User) CreateGroupChat() (chat *GroupChat, err error) {
 	}, firestore.MergeAll)
 
 	if err != nil {
-		return nil, fmt.Errorf("error updating user: %v\n", err)
+		return nil, fmt.Errorf("error updating user: %v", err)
 	}
 
 	return &newChat, nil
@@ -40,7 +40,7 @@ func (u *User) CreateGroupChat() (chat *GroupChat, err error) {
 func GetGroupChat(ID string) (chat *GroupChat, err error) {
 	doc, err := test.FirestoreClient.Collection(FirestoreGroupChatCollection).Doc(ID).Get(test.Context)
 	if err != nil {
-		return nil, fmt.Errorf("error getting group chat: %v\n", err)
+		return nil, fmt.Errorf("error getting group chat: %v", err)
 	}
 
 	if !doc.Exists() {
@@ -50,7 +50,7 @@ func GetGroupChat(ID string) (chat *GroupChat, err error) {
 	chat = &GroupChat{}
 	err = doc.DataTo(chat)
 	if err != nil {
-		return nil, fmt.Errorf("error parsing group chat: %v\n", err)
+		return nil, fmt.Errorf("error parsing group chat: %v", err)
 	}
 	chat.ID = doc.Ref.ID
 
@@ -67,7 +67,7 @@ func CreateUser(name string) (user *User, err error) {
 	ref, _, err := test.FirestoreClient.Collection(FirestoreUsersCollection).Add(test.Context, newUser)
 	if err != nil {
 		fmt.Println(err)
-		return nil, fmt.Errorf("error creating user: %v\n", err)
+		return nil, fmt.Errorf("error creating user: %v", err)
 	}
 	newUser.ID = ref.ID
 
@@ -77,7 +77,7 @@ func CreateUser(name string) (user *User, err error) {
 func GetUser(ID string) (user *User, err error) {
 	doc, err := test.FirestoreClient.Collection(FirestoreUsersCollection).Doc(ID).Get(test.Context)
 	if err != nil {
-		return nil, fmt.Errorf("error getting user: %v\n", err)
+		return nil, fmt.Errorf("error getting user: %v", err)
 	}
 
 	if !doc.Exists() {
@@ -87,7 +87,7 @@ func GetUser(ID string) (user *User, err error) {
 	user = &User{}
 	err = doc.DataTo(user)
 	if err != nil {
-		return nil, fmt.Errorf("error parsing user: %v\n", err)
+		return nil, fmt.Errorf("error parsing user: %v", err)
 	}
 	user.ID = doc.Ref.ID
 
@@ -97,12 +97,12 @@ func GetUser(ID string) (user *User, err error) {
 func (u *User) JoinOrQuitGroupChat(chatID string, action joinQuitAction) (err error) {
 	_, err = GetUser(u.ID)
 	if err != nil {
-		return fmt.Errorf("error getting user: %v\n", err)
+		return fmt.Errorf("error getting user: %v", err)
 	}
 
 	_, err = GetGroupChat(chatID)
 	if err != nil {
-		return fmt.Errorf("error getting group chat: %v\n", err)
+		return fmt.Errorf("error getting group chat: %v", err)
 	}
 
 	updates := []firestore.Update{}
@@ -118,7 +118,7 @@ func (u *User) JoinOrQuitGroupChat(chatID string, action joinQuitAction) (err er
 	_, err = test.FirestoreClient.Collection(FirestoreGroupChatCollection).Doc(chatID).Update(test.Context, updates)
 
 	if err != nil {
-		return fmt.Errorf("error updating group chat: %v\n", err)
+		return fmt.Errorf("error updating group chat: %v", err)
 	}
 
 	// update user
@@ -135,7 +135,7 @@ func (u *User) JoinOrQuitGroupChat(chatID string, action joinQuitAction) (err er
 
 	_, err = test.FirestoreClient.Collection(FirestoreUsersCollection).Doc(u.ID).Update(test.Context, updates)
 	if err != nil {
-		return fmt.Errorf("error updating user: %v\n", err)
+		return fmt.Errorf("error updating user: %v", err)
 	}
 
 	return nil
@@ -145,13 +145,13 @@ func (u *User) CreateDirectMessage(user2ID string) (chat *DirectMessage, err err
 	// check if user exists and if DM already exists
 	user2, err := GetUser(user2ID)
 	if err != nil {
-		return nil, fmt.Errorf("error getting user: %v\n", err)
+		return nil, fmt.Errorf("error getting user: %v", err)
 	}
 	if _, ok := user2.DMs[u.ID]; ok {
-		return nil, fmt.Errorf("direct message already exists\n")
+		return nil, fmt.Errorf("direct message already exists")
 	}
 	if _, ok := u.DMs[user2ID]; ok {
-		return nil, fmt.Errorf("direct message already exists\n")
+		return nil, fmt.Errorf("direct message already exists")
 	}
 
 	newDM := DirectMessage{
@@ -161,7 +161,7 @@ func (u *User) CreateDirectMessage(user2ID string) (chat *DirectMessage, err err
 
 	ref, _, err := test.FirestoreClient.Collection(FirestoreDirectMessagesCollection).Add(test.Context, newDM)
 	if err != nil {
-		return nil, fmt.Errorf("error creating direct message: %v\n", err)
+		return nil, fmt.Errorf("error creating direct message: %v", err)
 	}
 	newDM.ID = ref.ID
 
@@ -172,7 +172,7 @@ func (u *User) CreateDirectMessage(user2ID string) (chat *DirectMessage, err err
 		},
 	}, firestore.MergeAll)
 	if err != nil {
-		return nil, fmt.Errorf("error updating user: %v\n", err)
+		return nil, fmt.Errorf("error updating user: %v", err)
 	}
 
 	_, err = test.FirestoreClient.Collection(FirestoreUsersCollection).Doc(user2ID).Set(test.Context, map[string]interface{}{
@@ -181,7 +181,7 @@ func (u *User) CreateDirectMessage(user2ID string) (chat *DirectMessage, err err
 		},
 	}, firestore.MergeAll)
 	if err != nil {
-		return nil, fmt.Errorf("error updating user: %v\n", err)
+		return nil, fmt.Errorf("error updating user: %v", err)
 	}
 	return &newDM, nil
 }
@@ -189,7 +189,7 @@ func (u *User) CreateDirectMessage(user2ID string) (chat *DirectMessage, err err
 func GetDirectMessage(ID string) (chat *DirectMessage, err error) {
 	doc, err := test.FirestoreClient.Collection(FirestoreDirectMessagesCollection).Doc(ID).Get(test.Context)
 	if err != nil {
-		return nil, fmt.Errorf("error getting direct message: %v\n", err)
+		return nil, fmt.Errorf("error getting direct message: %v", err)
 	}
 
 	if !doc.Exists() {
@@ -199,7 +199,7 @@ func GetDirectMessage(ID string) (chat *DirectMessage, err error) {
 	chat = &DirectMessage{}
 	err = doc.DataTo(chat)
 	if err != nil {
-		return nil, fmt.Errorf("error parsing direct message: %v\n", err)
+		return nil, fmt.Errorf("error parsing direct message: %v", err)
 	}
 	chat.ID = doc.Ref.ID
 
@@ -215,7 +215,7 @@ func (u *User) SendMessageToGroupChat(chatID string, message string) error {
 
 	// check if user is in chat
 	if (!stringInSlice(u.ID, gc.Users)) && (gc.Owner != u.ID) {
-		return fmt.Errorf("user is not in group chat\n")
+		return fmt.Errorf("user is not in group chat")
 	}
 
 	// create message
@@ -229,7 +229,7 @@ func (u *User) SendMessageToGroupChat(chatID string, message string) error {
 	ref, _, err := test.FirestoreClient.Collection(FirestoreGroupChatCollection).Doc(chatID).
 		Collection(FirestoreMessagesCollection).Add(test.Context, newMessage)
 	if err != nil {
-		return fmt.Errorf("error creating message: %v\n", err)
+		return fmt.Errorf("error creating message: %v", err)
 	}
 	newMessage.ID = ref.ID
 
@@ -245,7 +245,7 @@ func (u *User) SendMessageToDirectMessage(chatID string, message string) error {
 
 	// check if user is in dm
 	if dm.User1 != u.ID && dm.User2 != u.ID {
-		return fmt.Errorf("user is not in direct message\n")
+		return fmt.Errorf("user is not in direct message")
 	}
 
 	// create message
@@ -259,7 +259,7 @@ func (u *User) SendMessageToDirectMessage(chatID string, message string) error {
 	ref, _, err := test.FirestoreClient.Collection(FirestoreDirectMessagesCollection).Doc(chatID).
 		Collection(FirestoreMessagesCollection).Add(test.Context, newMessage)
 	if err != nil {
-		return fmt.Errorf("error creating message: %v\n", err)
+		return fmt.Errorf("error creating message: %v", err)
 	}
 	newMessage.ID = ref.ID
 
