@@ -74,7 +74,7 @@ func Test1(t *testing.T) {
 		DocIDs:         []string{user1.ID},
 	}
 
-	client := pal.NewClient(firestoreClient)
+	client := pal.NewClientWithFirestore(firestoreClient)
 	data, err := client.ProcessAccessRequest(HandleAccess, dataSubjectLocator, user1.ID)
 	if err != nil {
 		panic(err)

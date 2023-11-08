@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"cloud.google.com/go/firestore"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type Locator struct {
@@ -39,10 +40,15 @@ type HandleDeletionFunc func(dataSubjectId string, obj interface{}) (nodesToTrav
 
 type Client struct {
 	FirestoreClient *firestore.Client
+	DbClient        DatabaseClient
 }
 
-func NewClient(firestoreClient *firestore.Client) *Client {
-	return &Client{FirestoreClient: firestoreClient}
+func NewClientWithFirestore(firestoreClient *firestore.Client) *Client {
+	return &Client{DbClient: newDbClientForFirestore(firestoreClient)}
+}
+
+func NewClientWithMongo(mongoClient *mongo.Client) *Client {
+	return &Client{DbClient: newDbClientForMongo(mongoClient)}
 }
 
 func validateLocator(loc Locator) error {
@@ -57,5 +63,3 @@ func validateLocator(loc Locator) error {
 	}
 	return nil
 }
-
-type DatabaseObject map[string]interface{}
