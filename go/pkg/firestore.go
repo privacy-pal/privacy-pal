@@ -16,10 +16,10 @@ func newDbClientForFirestore(client *firestore.Client) databaseClient {
 }
 
 func (c *firestoreClient) getDocument(loc Locator) (DatabaseObject, error) {
-	docRef := c.client.Collection(loc.CollectionPath[0]).Doc(loc.DocIDs[0])
+	docRef := c.client.Collection(loc.FirestoreLocator.CollectionPath[0]).Doc(loc.DocIDs[0])
 
-	for i := 1; i < len(loc.CollectionPath); i++ {
-		docRef = docRef.Collection(loc.CollectionPath[i]).Doc(loc.DocIDs[i])
+	for i := 1; i < len(loc.FirestoreLocator.CollectionPath); i++ {
+		docRef = docRef.Collection(loc.FirestoreLocator.CollectionPath[i]).Doc(loc.DocIDs[i])
 	}
 
 	doc, err := docRef.Get(context.Background())
@@ -36,10 +36,10 @@ func (c *firestoreClient) getDocument(loc Locator) (DatabaseObject, error) {
 }
 
 func (c *firestoreClient) getDocuments(loc Locator) ([]DatabaseObject, error) {
-	docRef := c.client.Collection(loc.CollectionPath[0])
+	docRef := c.client.Collection(loc.FirestoreLocator.CollectionPath[0])
 
-	for i := 1; i < len(loc.CollectionPath); i++ {
-		docRef = docRef.Doc(loc.DocIDs[i-1]).Collection(loc.CollectionPath[i])
+	for i := 1; i < len(loc.FirestoreLocator.CollectionPath); i++ {
+		docRef = docRef.Doc(loc.DocIDs[i-1]).Collection(loc.FirestoreLocator.CollectionPath[i])
 	}
 
 	var query firestore.Query = docRef.Query

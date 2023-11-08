@@ -42,10 +42,12 @@ func (u *User) HandleAccess(dataSubjectId string, currentDbObjLocator pal.Locato
 	data["Groupchats"] = make([]pal.Locator, 0)
 	for _, id := range u.GCs {
 		data["Groupchats"] = append(data["Groupchats"].([]pal.Locator), pal.Locator{
-			LocatorType:    pal.Document,
-			DataType:       string(GroupChatDataType),
-			CollectionPath: []string{"gcs"},
-			DocIDs:         []string{id},
+			LocatorType: pal.Document,
+			DataType:    string(GroupChatDataType),
+			FirestoreLocator: pal.FirestoreLocator{
+				CollectionPath: []string{"gcs"},
+				DocIDs:         []string{id},
+			},
 		})
 	}
 
@@ -56,15 +58,17 @@ func (g *GroupChat) HandleAccess(dataSubjectId string, currentDbObjLocator pal.L
 	data := make(map[string]interface{})
 
 	data["Messages"] = pal.Locator{
-		LocatorType:    pal.Collection,
-		DataType:       string(MessageDataType),
-		CollectionPath: append(currentDbObjLocator.CollectionPath, "messages"),
-		DocIDs:         currentDbObjLocator.DocIDs,
-		Queries: []pal.Query{
-			{
-				Path:  "userId",
-				Op:    "==",
-				Value: dataSubjectId,
+		LocatorType: pal.Collection,
+		DataType:    string(MessageDataType),
+		FirestoreLocator: pal.FirestoreLocator{
+			CollectionPath: append(currentDbObjLocator.FirestoreLocator.CollectionPath, "messages"),
+			DocIDs:         currentDbObjLocator.DocIDs,
+			Queries: []pal.Query{
+				{
+					Path:  "userId",
+					Op:    "==",
+					Value: dataSubjectId,
+				},
 			},
 		},
 	}

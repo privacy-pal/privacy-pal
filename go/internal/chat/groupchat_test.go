@@ -69,10 +69,12 @@ func Test1(t *testing.T) {
 	}
 
 	dataSubjectLocator := pal.Locator{
-		LocatorType:    pal.Document,
-		DataType:       string(UserDataType),
-		CollectionPath: []string{FirestoreUsersCollection},
-		DocIDs:         []string{user1.ID},
+		LocatorType: pal.Document,
+		DataType:    string(UserDataType),
+		FirestoreLocator: pal.FirestoreLocator{
+			CollectionPath: []string{FirestoreUsersCollection},
+			DocIDs:         []string{user1.ID},
+		},
 	}
 
 	client := pal.NewClientWithFirestore(firestoreClient)

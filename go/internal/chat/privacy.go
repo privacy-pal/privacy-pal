@@ -45,10 +45,12 @@ func HandleAccessUser(dataSubjectId string, currentDbObjLocator pal.Locator, dbO
 	for _, id := range dbObj["gcs"].([]interface{}) {
 		id := id.(string)
 		data["Groupchats"] = append(data["Groupchats"].([]pal.Locator), pal.Locator{
-			LocatorType:    pal.Document,
-			DataType:       GroupChatDataType,
-			CollectionPath: []string{"gcs"},
-			DocIDs:         []string{id},
+			LocatorType: pal.Document,
+			DataType:    GroupChatDataType,
+			FirestoreLocator: pal.FirestoreLocator{
+				CollectionPath: []string{"gcs"},
+				DocIDs:         []string{id},
+			},
 		})
 	}
 	data["DirectMessages"] = make([]pal.Locator, 0)
@@ -56,10 +58,12 @@ func HandleAccessUser(dataSubjectId string, currentDbObjLocator pal.Locator, dbO
 	for _, DMId := range dbObj["dms"].(map[string]interface{}) {
 		DMId := DMId.(string)
 		data["DirectMessages"] = append(data["DirectMessages"].([]pal.Locator), pal.Locator{
-			LocatorType:    pal.Document,
-			DataType:       DirectMessageDataType,
-			CollectionPath: []string{"dms"},
-			DocIDs:         []string{DMId},
+			LocatorType: pal.Document,
+			DataType:    DirectMessageDataType,
+			FirestoreLocator: pal.FirestoreLocator{
+				CollectionPath: []string{"dms"},
+				DocIDs:         []string{DMId},
+			},
 		})
 	}
 
@@ -70,15 +74,17 @@ func HandleAccessGroupChat(dataSubjectId string, currentDbObjLocator pal.Locator
 	data := make(map[string]interface{})
 
 	data["Messages"] = pal.Locator{
-		LocatorType:    pal.Collection,
-		DataType:       MessageDataType,
-		CollectionPath: append(currentDbObjLocator.CollectionPath, "messages"),
-		DocIDs:         currentDbObjLocator.DocIDs,
-		Queries: []pal.Query{
-			{
-				Path:  "userId",
-				Op:    "==",
-				Value: dataSubjectId,
+		LocatorType: pal.Collection,
+		DataType:    MessageDataType,
+		FirestoreLocator: pal.FirestoreLocator{
+			CollectionPath: append(currentDbObjLocator.FirestoreLocator.CollectionPath, "messages"),
+			DocIDs:         currentDbObjLocator.DocIDs,
+			Queries: []pal.Query{
+				{
+					Path:  "userId",
+					Op:    "==",
+					Value: dataSubjectId,
+				},
 			},
 		},
 	}
@@ -106,21 +112,25 @@ func HandleAccessDirectMessage(dataSubjectId string, currentDbObjLocator pal.Loc
 	}
 
 	data["Other User"] = pal.Locator{
-		LocatorType:    pal.Document,
-		DataType:       UserDataType,
-		CollectionPath: []string{"users"},
-		DocIDs:         []string{otherUserId},
+		LocatorType: pal.Document,
+		DataType:    UserDataType,
+		FirestoreLocator: pal.FirestoreLocator{
+			CollectionPath: []string{"users"},
+			DocIDs:         []string{otherUserId},
+		},
 	}
 	data["Messages"] = pal.Locator{
-		LocatorType:    pal.Collection,
-		DataType:       MessageDataType,
-		CollectionPath: append(currentDbObjLocator.CollectionPath, "messages"),
-		DocIDs:         currentDbObjLocator.DocIDs,
-		Queries: []pal.Query{
-			{
-				Path:  "userId",
-				Op:    "==",
-				Value: dataSubjectId,
+		LocatorType: pal.Collection,
+		DataType:    MessageDataType,
+		FirestoreLocator: pal.FirestoreLocator{
+			CollectionPath: append(currentDbObjLocator.FirestoreLocator.CollectionPath, "messages"),
+			DocIDs:         currentDbObjLocator.DocIDs,
+			Queries: []pal.Query{
+				{
+					Path:  "userId",
+					Op:    "==",
+					Value: dataSubjectId,
+				},
 			},
 		},
 	}

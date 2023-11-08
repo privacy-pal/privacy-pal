@@ -19,6 +19,6 @@ func NewClientWithFirestore(firestoreClient *firestore.Client) *Client {
 	return &Client{dbClient: newDbClientForFirestore(firestoreClient)}
 }
 
-func NewClientWithMongo(mongoClient *mongo.Client) *Client {
-	return &Client{dbClient: newDbClientForMongo(mongoClient)}
+func NewClientWithMongo(mongoClient *mongo.Client, dbName string) *Client {
+	return &Client{dbClient: newDbClientForMongo(mongoClient, dbName)}
 }
