@@ -5,11 +5,11 @@ import (
 )
 
 type mongoClient struct {
-	Client *mongo.Client
+	client *mongo.Client
 }
 
-func newDbClientForMongo(client *mongo.Client) DatabaseClient {
-	return &mongoClient{Client: client}
+func newDbClientForMongo(client *mongo.Client) databaseClient {
+	return &mongoClient{client: client}
 }
 
 func (c *mongoClient) getDocument(loc Locator) (DatabaseObject, error) {

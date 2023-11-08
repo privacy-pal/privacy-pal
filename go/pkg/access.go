@@ -9,7 +9,7 @@ func (pal *Client) ProcessAccessRequest(handleAccess HandleAccessFunc, dataSubje
 	if dataSubjectLocator.LocatorType != Document {
 		return nil, fmt.Errorf("%s data subject locator type must be document", ACCESS_REQUEST_ERROR)
 	}
-	dataSubject, err := pal.getDocumentFromFirestore(dataSubjectLocator)
+	dataSubject, err := pal.dbClient.getDocument(dataSubjectLocator)
 	if err != nil {
 		return nil, fmt.Errorf("%s %w", ACCESS_REQUEST_ERROR, err)
 	}
@@ -69,7 +69,7 @@ func (pal *Client) processLocator(handleAccess HandleAccessFunc, loc Locator, da
 		return nil, err
 	}
 	if loc.LocatorType == Document {
-		dataNode, err := pal.getDocumentFromFirestore(loc)
+		dataNode, err := pal.dbClient.getDocument(loc)
 		if err != nil {
 			return nil, err
 		}
@@ -79,7 +79,7 @@ func (pal *Client) processLocator(handleAccess HandleAccessFunc, loc Locator, da
 		}
 		return retData, nil
 	} else if loc.LocatorType == Collection {
-		dataNodes, err := pal.getDocumentsFromFirestore(loc)
+		dataNodes, err := pal.dbClient.getDocuments(loc)
 		if err != nil {
 			return nil, err
 		}

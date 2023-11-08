@@ -1,6 +1,6 @@
 package pal
 
-type DatabaseClient interface {
+type databaseClient interface {
 	getDocument(loc Locator) (DatabaseObject, error)
 	getDocuments(loc Locator) ([]DatabaseObject, error)
 }
