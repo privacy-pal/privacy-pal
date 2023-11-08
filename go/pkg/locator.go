@@ -6,24 +6,10 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-type FirestoreLocator struct {
-	// Collection path leading up to the document in Firestore
-	// E.g. "[users]", "[courses,sections]"
-	CollectionPath []string
-	// List of document IDs in the order of collections
-	DocIDs []string
-	// List of queries to be applied to a collection. Ignored if type is document.
-	Queries []Query
-}
-
-type MongoLocator struct {
-	Collection string
-	Filter     bson.D
-}
-
 type Locator struct {
 	LocatorType LocatorType
 	DataType    string
+	// Only one of FirestoreLocator and MongoLocator should be set
 	FirestoreLocator
 	MongoLocator
 }
@@ -35,10 +21,25 @@ const (
 	Collection LocatorType = "collection"
 )
 
+type FirestoreLocator struct {
+	// Collection path leading up to the document in Firestore
+	// E.g. "[users]", "[courses,sections]"
+	CollectionPath []string
+	// List of document IDs in the order of collections
+	DocIDs []string
+	// List of queries to be applied to a collection. Ignored if type is document.
+	Queries []Query
+}
+
 type Query struct {
 	Path  string
 	Op    string
 	Value interface{}
+}
+
+type MongoLocator struct {
+	Collection string
+	Filter     bson.D
 }
 
 func validateLocator(loc Locator) error {
