@@ -5,23 +5,11 @@ import (
 	"time"
 
 	"cloud.google.com/go/firestore"
-	"github.com/joho/godotenv"
+	"github.com/privacy-pal/privacy-pal/internal/test"
 )
 
-var firestoreClient *firestore.Client
-
 func init() {
-	err := godotenv.Load("../../../.env")
-	fmt.Println("Loaded .env file")
-	if err != nil {
-		panic(err)
-	}
-	initializeFirebaseApp()
-	client, err := App.Firestore(Context)
-	if err != nil {
-		panic(fmt.Errorf("Firestore client error: %v\n", err))
-	}
-	firestoreClient = client
+	test.InitFirestoreClient()
 }
 
 func (u *User) CreateGroupChat() (chat *GroupChat, err error) {
@@ -31,14 +19,14 @@ func (u *User) CreateGroupChat() (chat *GroupChat, err error) {
 		Messages: []Message{},
 	}
 
-	ref, _, err := firestoreClient.Collection(FirestoreGroupChatCollection).Add(Context, newChat)
+	ref, _, err := test.FirestoreClient.Collection(FirestoreGroupChatCollection).Add(test.Context, newChat)
 	if err != nil {
 		return nil, fmt.Errorf("error creating group chat: %v\n", err)
 	}
 	newChat.ID = ref.ID
 
 	// add the group chat to the user
-	_, err = firestoreClient.Collection(FirestoreUsersCollection).Doc(u.ID).Set(Context, map[string]interface{}{
+	_, err = test.FirestoreClient.Collection(FirestoreUsersCollection).Doc(u.ID).Set(test.Context, map[string]interface{}{
 		"gcs": firestore.ArrayUnion(newChat.ID),
 	}, firestore.MergeAll)
 
@@ -50,7 +38,7 @@ func (u *User) CreateGroupChat() (chat *GroupChat, err error) {
 }
 
 func GetGroupChat(ID string) (chat *GroupChat, err error) {
-	doc, err := firestoreClient.Collection(FirestoreGroupChatCollection).Doc(ID).Get(Context)
+	doc, err := test.FirestoreClient.Collection(FirestoreGroupChatCollection).Doc(ID).Get(test.Context)
 	if err != nil {
 		return nil, fmt.Errorf("error getting group chat: %v\n", err)
 	}
@@ -76,7 +64,7 @@ func CreateUser(name string) (user *User, err error) {
 		DMs:  map[string]string{},
 	}
 
-	ref, _, err := firestoreClient.Collection(FirestoreUsersCollection).Add(Context, newUser)
+	ref, _, err := test.FirestoreClient.Collection(FirestoreUsersCollection).Add(test.Context, newUser)
 	if err != nil {
 		fmt.Println(err)
 		return nil, fmt.Errorf("error creating user: %v\n", err)
@@ -87,7 +75,7 @@ func CreateUser(name string) (user *User, err error) {
 }
 
 func GetUser(ID string) (user *User, err error) {
-	doc, err := firestoreClient.Collection(FirestoreUsersCollection).Doc(ID).Get(Context)
+	doc, err := test.FirestoreClient.Collection(FirestoreUsersCollection).Doc(ID).Get(test.Context)
 	if err != nil {
 		return nil, fmt.Errorf("error getting user: %v\n", err)
 	}
@@ -127,7 +115,7 @@ func (u *User) JoinOrQuitGroupChat(chatID string, action joinQuitAction) (err er
 			{Path: "users", Value: firestore.ArrayRemove(u.ID)},
 		}
 	}
-	_, err = firestoreClient.Collection(FirestoreGroupChatCollection).Doc(chatID).Update(Context, updates)
+	_, err = test.FirestoreClient.Collection(FirestoreGroupChatCollection).Doc(chatID).Update(test.Context, updates)
 
 	if err != nil {
 		return fmt.Errorf("error updating group chat: %v\n", err)
@@ -145,7 +133,7 @@ func (u *User) JoinOrQuitGroupChat(chatID string, action joinQuitAction) (err er
 		}
 	}
 
-	_, err = firestoreClient.Collection(FirestoreUsersCollection).Doc(u.ID).Update(Context, updates)
+	_, err = test.FirestoreClient.Collection(FirestoreUsersCollection).Doc(u.ID).Update(test.Context, updates)
 	if err != nil {
 		return fmt.Errorf("error updating user: %v\n", err)
 	}
@@ -171,14 +159,14 @@ func (u *User) CreateDirectMessage(user2ID string) (chat *DirectMessage, err err
 		User2: user2ID,
 	}
 
-	ref, _, err := firestoreClient.Collection(FirestoreDirectMessagesCollection).Add(Context, newDM)
+	ref, _, err := test.FirestoreClient.Collection(FirestoreDirectMessagesCollection).Add(test.Context, newDM)
 	if err != nil {
 		return nil, fmt.Errorf("error creating direct message: %v\n", err)
 	}
 	newDM.ID = ref.ID
 
 	// add the DM to both users
-	_, err = firestoreClient.Collection(FirestoreUsersCollection).Doc(u.ID).Set(Context, map[string]interface{}{
+	_, err = test.FirestoreClient.Collection(FirestoreUsersCollection).Doc(u.ID).Set(test.Context, map[string]interface{}{
 		"dms": map[string]string{
 			user2ID: newDM.ID,
 		},
@@ -187,7 +175,7 @@ func (u *User) CreateDirectMessage(user2ID string) (chat *DirectMessage, err err
 		return nil, fmt.Errorf("error updating user: %v\n", err)
 	}
 
-	_, err = firestoreClient.Collection(FirestoreUsersCollection).Doc(user2ID).Set(Context, map[string]interface{}{
+	_, err = test.FirestoreClient.Collection(FirestoreUsersCollection).Doc(user2ID).Set(test.Context, map[string]interface{}{
 		"dms": map[string]string{
 			u.ID: newDM.ID,
 		},
@@ -199,7 +187,7 @@ func (u *User) CreateDirectMessage(user2ID string) (chat *DirectMessage, err err
 }
 
 func GetDirectMessage(ID string) (chat *DirectMessage, err error) {
-	doc, err := firestoreClient.Collection(FirestoreDirectMessagesCollection).Doc(ID).Get(Context)
+	doc, err := test.FirestoreClient.Collection(FirestoreDirectMessagesCollection).Doc(ID).Get(test.Context)
 	if err != nil {
 		return nil, fmt.Errorf("error getting direct message: %v\n", err)
 	}
@@ -238,8 +226,8 @@ func (u *User) SendMessageToGroupChat(chatID string, message string) error {
 	}
 
 	// write to firestore subcollection
-	ref, _, err := firestoreClient.Collection(FirestoreGroupChatCollection).Doc(chatID).
-		Collection(FirestoreMessagesCollection).Add(Context, newMessage)
+	ref, _, err := test.FirestoreClient.Collection(FirestoreGroupChatCollection).Doc(chatID).
+		Collection(FirestoreMessagesCollection).Add(test.Context, newMessage)
 	if err != nil {
 		return fmt.Errorf("error creating message: %v\n", err)
 	}
@@ -268,8 +256,8 @@ func (u *User) SendMessageToDirectMessage(chatID string, message string) error {
 	}
 
 	// write to firestore subcollection
-	ref, _, err := firestoreClient.Collection(FirestoreDirectMessagesCollection).Doc(chatID).
-		Collection(FirestoreMessagesCollection).Add(Context, newMessage)
+	ref, _, err := test.FirestoreClient.Collection(FirestoreDirectMessagesCollection).Doc(chatID).
+		Collection(FirestoreMessagesCollection).Add(test.Context, newMessage)
 	if err != nil {
 		return fmt.Errorf("error creating message: %v\n", err)
 	}

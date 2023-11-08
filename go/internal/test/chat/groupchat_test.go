@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/privacy-pal/privacy-pal/internal/test"
 	pal "github.com/privacy-pal/privacy-pal/pkg"
 )
 
@@ -77,7 +78,7 @@ func Test1(t *testing.T) {
 		},
 	}
 
-	client := pal.NewClientWithFirestore(firestoreClient)
+	client := pal.NewClientWithFirestore(test.FirestoreClient)
 	data, err := client.ProcessAccessRequest(HandleAccess, dataSubjectLocator, user1.ID)
 	if err != nil {
 		panic(err)
