@@ -6,6 +6,8 @@ import (
 
 	"github.com/privacy-pal/privacy-pal/internal/test"
 	pal "github.com/privacy-pal/privacy-pal/pkg"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func TestFirestore(t *testing.T) {
@@ -94,6 +96,8 @@ func TestFirestore(t *testing.T) {
 }
 
 func TestMongo(t *testing.T) {
+	test.InitMongoClient()
+
 	// create user 1
 	user1, err := CreateUserMongo("user1")
 	if err != nil {
@@ -154,12 +158,21 @@ func TestMongo(t *testing.T) {
 		panic(err)
 	}
 
+	userID, err := primitive.ObjectIDFromHex(user1.ID)
+	if err != nil {
+		panic(err)
+	}
+
 	dataSubjectLocator := pal.Locator{
 		LocatorType: pal.Document,
 		DataType:    string(UserDataType),
 		FirestoreLocator: pal.FirestoreLocator{
 			CollectionPath: []string{FirestoreUsersCollection},
 			DocIDs:         []string{user1.ID},
+		},
+		MongoLocator: pal.MongoLocator{
+			Collection: "users",
+			Filter:     bson.D{{Key: "_id", Value: userID}},
 		},
 	}
 
