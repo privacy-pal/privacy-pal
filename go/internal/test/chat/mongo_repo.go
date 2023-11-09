@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"time"
 
-	"cloud.google.com/go/firestore"
 	"github.com/privacy-pal/privacy-pal/internal/test"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 func (u *User) CreateGroupChatMongo() (chat *GroupChat, err error) {
@@ -15,17 +16,16 @@ func (u *User) CreateGroupChatMongo() (chat *GroupChat, err error) {
 		Messages: []Message{},
 	}
 
-	ref, _, err := test.FirestoreClient.Collection(FirestoreGroupChatCollection).Add(test.Context, newChat)
+	result, err := test.MongoDb.Collection(FirestoreGroupChatCollection).InsertOne(test.Context, newChat)
 	if err != nil {
 		return nil, fmt.Errorf("error creating group chat: %v", err)
 	}
-	newChat.ID = ref.ID
+	newChat.ID = result.InsertedID.(string)
 
 	// add the group chat to the user
-	_, err = test.FirestoreClient.Collection(FirestoreUsersCollection).Doc(u.ID).Set(test.Context, map[string]interface{}{
-		"gcs": firestore.ArrayUnion(newChat.ID),
-	}, firestore.MergeAll)
-
+	filter := bson.D{{Key: "_id", Value: u.ID}}
+	update := bson.M{"$push": bson.M{"user.$.gcs": newChat.ID}}
+	_, err = test.MongoDb.Collection(FirestoreUsersCollection).UpdateOne(test.Context, filter, update)
 	if err != nil {
 		return nil, fmt.Errorf("error updating user: %v", err)
 	}
@@ -34,21 +34,13 @@ func (u *User) CreateGroupChatMongo() (chat *GroupChat, err error) {
 }
 
 func GetGroupChatMongo(ID string) (chat *GroupChat, err error) {
-	doc, err := test.FirestoreClient.Collection(FirestoreGroupChatCollection).Doc(ID).Get(test.Context)
-	if err != nil {
+	if err = test.MongoDb.Collection(FirestoreGroupChatCollection).FindOne(test.Context, bson.D{{Key: "_id", Value: ID}}).Decode(chat); err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, fmt.Errorf(doesNotExistError)
+		}
 		return nil, fmt.Errorf("error getting group chat: %v", err)
 	}
-
-	if !doc.Exists() {
-		return nil, fmt.Errorf(doesNotExistError)
-	}
-
-	chat = &GroupChat{}
-	err = doc.DataTo(chat)
-	if err != nil {
-		return nil, fmt.Errorf("error parsing group chat: %v", err)
-	}
-	chat.ID = doc.Ref.ID
+	chat.ID = ID
 
 	return chat, nil
 }
@@ -60,32 +52,23 @@ func CreateUserMongo(name string) (user *User, err error) {
 		DMs:  map[string]string{},
 	}
 
-	ref, _, err := test.FirestoreClient.Collection(FirestoreUsersCollection).Add(test.Context, newUser)
+	result, err := test.MongoDb.Collection(FirestoreUsersCollection).InsertOne(test.Context, newUser)
 	if err != nil {
-		fmt.Println(err)
 		return nil, fmt.Errorf("error creating user: %v", err)
 	}
-	newUser.ID = ref.ID
+	newUser.ID = result.InsertedID.(string)
 
 	return &newUser, nil
 }
 
 func GetUserMongo(ID string) (user *User, err error) {
-	doc, err := test.FirestoreClient.Collection(FirestoreUsersCollection).Doc(ID).Get(test.Context)
-	if err != nil {
+	if err = test.MongoDb.Collection(FirestoreUsersCollection).FindOne(test.Context, bson.D{{Key: "_id", Value: ID}}).Decode(user); err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, fmt.Errorf(doesNotExistError)
+		}
 		return nil, fmt.Errorf("error getting user: %v", err)
 	}
-
-	if !doc.Exists() {
-		return nil, fmt.Errorf(doesNotExistError)
-	}
-
-	user = &User{}
-	err = doc.DataTo(user)
-	if err != nil {
-		return nil, fmt.Errorf("error parsing user: %v", err)
-	}
-	user.ID = doc.Ref.ID
+	user.ID = ID
 
 	return user, nil
 }
@@ -96,42 +79,44 @@ func (u *User) JoinOrQuitGroupChatMongo(chatID string, action joinQuitAction) (e
 		return fmt.Errorf("error getting user: %v", err)
 	}
 
-	_, err = GetGroupChatFirestore(chatID)
+	_, err = GetGroupChatMongo(chatID)
 	if err != nil {
 		return fmt.Errorf("error getting group chat: %v", err)
 	}
 
-	updates := []firestore.Update{}
+	// add or remove user from mongo group chat users based on action
 	if action == JoinChat {
-		updates = []firestore.Update{
-			{Path: "users", Value: firestore.ArrayUnion(u.ID)},
+		// Update group chat
+		filter := bson.D{{Key: "_id", Value: chatID}}
+		update := bson.M{"$set": bson.M{"gc.$.users": bson.M{"setUnion": bson.M{"gc.$.users": u.ID}}}}
+		_, err = test.MongoDb.Collection(FirestoreGroupChatCollection).UpdateOne(test.Context, filter, update)
+		if err != nil {
+			return fmt.Errorf("error updating group chat: %v", err)
+		}
+
+		// Update user
+		filter = bson.D{{Key: "_id", Value: u.ID}}
+		update = bson.M{"$set": bson.M{"user.$.gcs": bson.M{"setUnion": bson.M{"user.$.gcs": chatID}}}}
+		_, err = test.MongoDb.Collection(FirestoreUsersCollection).UpdateOne(test.Context, filter, update)
+		if err != nil {
+			return fmt.Errorf("error updating user: %v", err)
 		}
 	} else if action == QuitChat {
-		updates = []firestore.Update{
-			{Path: "users", Value: firestore.ArrayRemove(u.ID)},
+		// Update group chat
+		filter := bson.D{{Key: "_id", Value: chatID}}
+		update := bson.M{"$set": bson.M{"gc.$.users": bson.M{"setDifference": bson.M{"gc.$.users": u.ID}}}}
+		_, err = test.MongoDb.Collection(FirestoreGroupChatCollection).UpdateOne(test.Context, filter, update)
+		if err != nil {
+			return fmt.Errorf("error updating group chat: %v", err)
 		}
-	}
-	_, err = test.FirestoreClient.Collection(FirestoreGroupChatCollection).Doc(chatID).Update(test.Context, updates)
 
-	if err != nil {
-		return fmt.Errorf("error updating group chat: %v", err)
-	}
-
-	// update user
-	updates = []firestore.Update{}
-	if action == JoinChat {
-		updates = []firestore.Update{
-			{Path: "gcs", Value: firestore.ArrayUnion(chatID)},
+		// Update user
+		filter = bson.D{{Key: "_id", Value: u.ID}}
+		update = bson.M{"$set": bson.M{"user.$.gcs": bson.M{"setDifference": bson.M{"user.$.gcs": chatID}}}}
+		_, err = test.MongoDb.Collection(FirestoreUsersCollection).UpdateOne(test.Context, filter, update)
+		if err != nil {
+			return fmt.Errorf("error updating user: %v", err)
 		}
-	} else if action == QuitChat {
-		updates = []firestore.Update{
-			{Path: "gcs", Value: firestore.ArrayRemove(chatID)},
-		}
-	}
-
-	_, err = test.FirestoreClient.Collection(FirestoreUsersCollection).Doc(u.ID).Update(test.Context, updates)
-	if err != nil {
-		return fmt.Errorf("error updating user: %v", err)
 	}
 
 	return nil
@@ -155,49 +140,38 @@ func (u *User) CreateDirectMessageMongo(user2ID string) (chat *DirectMessage, er
 		User2: user2ID,
 	}
 
-	ref, _, err := test.FirestoreClient.Collection(FirestoreDirectMessagesCollection).Add(test.Context, newDM)
+	result, err := test.MongoDb.Collection(FirestoreDirectMessagesCollection).InsertOne(test.Context, newDM)
 	if err != nil {
 		return nil, fmt.Errorf("error creating direct message: %v", err)
 	}
-	newDM.ID = ref.ID
+	newDM.ID = result.InsertedID.(string)
 
 	// add the DM to both users
-	_, err = test.FirestoreClient.Collection(FirestoreUsersCollection).Doc(u.ID).Set(test.Context, map[string]interface{}{
-		"dms": map[string]string{
-			user2ID: newDM.ID,
-		},
-	}, firestore.MergeAll)
+	filter := bson.D{{Key: "_id", Value: u.ID}}
+	update := bson.M{"$set": bson.M{fmt.Sprintf("dm.%s", user2ID): newDM.ID}}
+	_, err = test.MongoDb.Collection(FirestoreUsersCollection).UpdateOne(test.Context, filter, update)
 	if err != nil {
 		return nil, fmt.Errorf("error updating user: %v", err)
 	}
 
-	_, err = test.FirestoreClient.Collection(FirestoreUsersCollection).Doc(user2ID).Set(test.Context, map[string]interface{}{
-		"dms": map[string]string{
-			u.ID: newDM.ID,
-		},
-	}, firestore.MergeAll)
+	filter = bson.D{{Key: "_id", Value: user2ID}}
+	update = bson.M{"$set": bson.M{fmt.Sprintf("dm.%s", u.ID): newDM.ID}}
+	_, err = test.MongoDb.Collection(FirestoreUsersCollection).UpdateOne(test.Context, filter, update)
 	if err != nil {
 		return nil, fmt.Errorf("error updating user: %v", err)
 	}
+
 	return &newDM, nil
 }
 
 func GetDirectMessageMongo(ID string) (chat *DirectMessage, err error) {
-	doc, err := test.FirestoreClient.Collection(FirestoreDirectMessagesCollection).Doc(ID).Get(test.Context)
-	if err != nil {
+	if err = test.MongoDb.Collection(FirestoreDirectMessagesCollection).FindOne(test.Context, bson.D{{Key: "_id", Value: ID}}).Decode(chat); err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, fmt.Errorf(doesNotExistError)
+		}
 		return nil, fmt.Errorf("error getting direct message: %v", err)
 	}
-
-	if !doc.Exists() {
-		return nil, fmt.Errorf(doesNotExistError)
-	}
-
-	chat = &DirectMessage{}
-	err = doc.DataTo(chat)
-	if err != nil {
-		return nil, fmt.Errorf("error parsing direct message: %v", err)
-	}
-	chat.ID = doc.Ref.ID
+	chat.ID = ID
 
 	return chat, nil
 }
@@ -221,13 +195,13 @@ func (u *User) SendMessageToGroupChatMongo(chatID string, message string) error 
 		Timestamp: time.Now(),
 	}
 
-	// write to firestore subcollection
-	ref, _, err := test.FirestoreClient.Collection(FirestoreGroupChatCollection).Doc(chatID).
-		Collection(FirestoreMessagesCollection).Add(test.Context, newMessage)
+	// write to mongo group chat collection
+	filter := bson.D{{Key: "_id", Value: chatID}}
+	update := bson.M{"$push": bson.M{"messages": newMessage}}
+	_, err = test.MongoDb.Collection(FirestoreGroupChatCollection).UpdateOne(test.Context, filter, update)
 	if err != nil {
 		return fmt.Errorf("error creating message: %v", err)
 	}
-	newMessage.ID = ref.ID
 
 	return nil
 }
@@ -251,13 +225,13 @@ func (u *User) SendMessageToDirectMessageMongo(chatID string, message string) er
 		Timestamp: time.Now(),
 	}
 
-	// write to firestore subcollection
-	ref, _, err := test.FirestoreClient.Collection(FirestoreDirectMessagesCollection).Doc(chatID).
-		Collection(FirestoreMessagesCollection).Add(test.Context, newMessage)
+	// write to mongo direct message collection
+	filter := bson.D{{Key: "_id", Value: chatID}}
+	update := bson.M{"$push": bson.M{"messages": newMessage}}
+	_, err = test.MongoDb.Collection(FirestoreDirectMessagesCollection).UpdateOne(test.Context, filter, update)
 	if err != nil {
 		return fmt.Errorf("error creating message: %v", err)
 	}
-	newMessage.ID = ref.ID
 
 	return nil
 }
