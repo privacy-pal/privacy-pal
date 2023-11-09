@@ -14,8 +14,8 @@ type mongoClient struct {
 	db *mongo.Database
 }
 
-func newDbClientForMongo(client *mongo.Client, dbName string) databaseClient {
-	return &mongoClient{db: client.Database(dbName)}
+func newDbClientForMongo(mongoDb *mongo.Database) databaseClient {
+	return &mongoClient{db: mongoDb}
 }
 
 func (c *mongoClient) getDocument(loc Locator) (DatabaseObject, error) {
