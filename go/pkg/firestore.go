@@ -7,11 +7,19 @@ import (
 	"cloud.google.com/go/firestore"
 )
 
-func (pal *Client) getDocumentFromFirestore(loc Locator) (DatabaseObject, error) {
-	docRef := pal.FirestoreClient.Collection(loc.CollectionPath[0]).Doc(loc.DocIDs[0])
+type firestoreClient struct {
+	client *firestore.Client
+}
 
-	for i := 1; i < len(loc.CollectionPath); i++ {
-		docRef = docRef.Collection(loc.CollectionPath[i]).Doc(loc.DocIDs[i])
+func newDbClientForFirestore(client *firestore.Client) databaseClient {
+	return &firestoreClient{client: client}
+}
+
+func (c *firestoreClient) getDocument(loc Locator) (DatabaseObject, error) {
+	docRef := c.client.Collection(loc.FirestoreLocator.CollectionPath[0]).Doc(loc.DocIDs[0])
+
+	for i := 1; i < len(loc.FirestoreLocator.CollectionPath); i++ {
+		docRef = docRef.Collection(loc.FirestoreLocator.CollectionPath[i]).Doc(loc.DocIDs[i])
 	}
 
 	doc, err := docRef.Get(context.Background())
@@ -27,11 +35,11 @@ func (pal *Client) getDocumentFromFirestore(loc Locator) (DatabaseObject, error)
 	return data, nil
 }
 
-func (pal *Client) getDocumentsFromFirestore(loc Locator) ([]DatabaseObject, error) {
-	docRef := pal.FirestoreClient.Collection(loc.CollectionPath[0])
+func (c *firestoreClient) getDocuments(loc Locator) ([]DatabaseObject, error) {
+	docRef := c.client.Collection(loc.FirestoreLocator.CollectionPath[0])
 
-	for i := 1; i < len(loc.CollectionPath); i++ {
-		docRef = docRef.Doc(loc.DocIDs[i-1]).Collection(loc.CollectionPath[i])
+	for i := 1; i < len(loc.FirestoreLocator.CollectionPath); i++ {
+		docRef = docRef.Doc(loc.DocIDs[i-1]).Collection(loc.FirestoreLocator.CollectionPath[i])
 	}
 
 	var query firestore.Query = docRef.Query
@@ -57,28 +65,28 @@ func (pal *Client) getDocumentsFromFirestore(loc Locator) ([]DatabaseObject, err
 	return dataNodes, nil
 }
 
-func (pal *Client) addDeletionOperationToBatch(batch *firestore.WriteBatch, loc Locator) {
-	docRef := pal.FirestoreClient.Collection(loc.CollectionPath[0]).Doc(loc.DocIDs[0])
+// func (pal *Client) addDeletionOperationToBatch(batch *firestore.WriteBatch, loc Locator) {
+// 	docRef := pal.dbClient.Collection(loc.CollectionPath[0]).Doc(loc.DocIDs[0])
 
-	for i := 1; i < len(loc.CollectionPath); i++ {
-		docRef = docRef.Collection(loc.CollectionPath[i]).Doc(loc.DocIDs[i])
-	}
-	batch.Delete(docRef)
-}
+// 	for i := 1; i < len(loc.CollectionPath); i++ {
+// 		docRef = docRef.Collection(loc.CollectionPath[i]).Doc(loc.DocIDs[i])
+// 	}
+// 	batch.Delete(docRef)
+// }
 
-func (pal *Client) addUpdateOperationToBatch(batch *firestore.WriteBatch, loc Locator, fieldsToUpdate []firestore.Update) {
-	docRef := pal.FirestoreClient.Collection(loc.CollectionPath[0]).Doc(loc.DocIDs[0])
+// func (pal *Client) addUpdateOperationToBatch(batch *firestore.WriteBatch, loc Locator, fieldsToUpdate []firestore.Update) {
+// 	docRef := pal.dbClient.Collection(loc.CollectionPath[0]).Doc(loc.DocIDs[0])
 
-	for i := 1; i < len(loc.CollectionPath); i++ {
-		docRef = docRef.Collection(loc.CollectionPath[i]).Doc(loc.DocIDs[i])
-	}
-	batch.Update(docRef, fieldsToUpdate)
-}
+// 	for i := 1; i < len(loc.CollectionPath); i++ {
+// 		docRef = docRef.Collection(loc.CollectionPath[i]).Doc(loc.DocIDs[i])
+// 	}
+// 	batch.Update(docRef, fieldsToUpdate)
+// }
 
-func (pal *Client) commitBatch(batch *firestore.WriteBatch) error {
-	_, err := batch.Commit(context.Background())
-	if err != nil {
-		return fmt.Errorf("%s %w", WRITE_BATCH_ERROR, err)
-	}
-	return nil
-}
+// func (pal *Client) commitBatch(batch *firestore.WriteBatch) error {
+// 	_, err := batch.Commit(context.Background())
+// 	if err != nil {
+// 		return fmt.Errorf("%s %w", WRITE_BATCH_ERROR, err)
+// 	}
+// 	return nil
+// }

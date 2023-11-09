@@ -2,6 +2,8 @@ package chat
 
 import (
 	pal "github.com/privacy-pal/privacy-pal/pkg"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 const (
@@ -44,22 +46,44 @@ func HandleAccessUser(dataSubjectId string, currentDbObjLocator pal.Locator, dbO
 	data["Groupchats"] = make([]pal.Locator, 0)
 	for _, id := range dbObj["gcs"].([]interface{}) {
 		id := id.(string)
+		objectID, err := primitive.ObjectIDFromHex(id)
+		if err != nil {
+			panic(err)
+		}
+
 		data["Groupchats"] = append(data["Groupchats"].([]pal.Locator), pal.Locator{
-			LocatorType:    pal.Document,
-			DataType:       GroupChatDataType,
-			CollectionPath: []string{"gcs"},
-			DocIDs:         []string{id},
+			LocatorType: pal.Document,
+			DataType:    GroupChatDataType,
+			FirestoreLocator: pal.FirestoreLocator{
+				CollectionPath: []string{"gcs"},
+				DocIDs:         []string{id},
+			},
+			MongoLocator: pal.MongoLocator{
+				Collection: "gcs",
+				Filter:     bson.D{{Key: "_id", Value: objectID}},
+			},
 		})
 	}
 	data["DirectMessages"] = make([]pal.Locator, 0)
 	// TODO: support this in yaml
-	for _, DMId := range dbObj["dms"].(map[string]interface{}) {
-		DMId := DMId.(string)
+	for _, dmID := range dbObj["dms"].(map[string]interface{}) {
+		dmID := dmID.(string)
+		dmIDObj, err := primitive.ObjectIDFromHex(dmID)
+		if err != nil {
+			panic(err)
+		}
+
 		data["DirectMessages"] = append(data["DirectMessages"].([]pal.Locator), pal.Locator{
-			LocatorType:    pal.Document,
-			DataType:       DirectMessageDataType,
-			CollectionPath: []string{"dms"},
-			DocIDs:         []string{DMId},
+			LocatorType: pal.Document,
+			DataType:    DirectMessageDataType,
+			FirestoreLocator: pal.FirestoreLocator{
+				CollectionPath: []string{"dms"},
+				DocIDs:         []string{dmID},
+			},
+			MongoLocator: pal.MongoLocator{
+				Collection: "dms",
+				Filter:     bson.D{{Key: "_id", Value: dmIDObj}},
+			},
 		})
 	}
 
@@ -70,16 +94,22 @@ func HandleAccessGroupChat(dataSubjectId string, currentDbObjLocator pal.Locator
 	data := make(map[string]interface{})
 
 	data["Messages"] = pal.Locator{
-		LocatorType:    pal.Collection,
-		DataType:       MessageDataType,
-		CollectionPath: append(currentDbObjLocator.CollectionPath, "messages"),
-		DocIDs:         currentDbObjLocator.DocIDs,
-		Queries: []pal.Query{
-			{
-				Path:  "userId",
-				Op:    "==",
-				Value: dataSubjectId,
+		LocatorType: pal.Collection,
+		DataType:    MessageDataType,
+		FirestoreLocator: pal.FirestoreLocator{
+			CollectionPath: append(currentDbObjLocator.FirestoreLocator.CollectionPath, "messages"),
+			DocIDs:         currentDbObjLocator.DocIDs,
+			Queries: []pal.Query{
+				{
+					Path:  "userId",
+					Op:    "==",
+					Value: dataSubjectId,
+				},
 			},
+		},
+		MongoLocator: pal.MongoLocator{
+			Collection: "messages",
+			Filter:     bson.D{{Key: "userId", Value: dataSubjectId}, {Key: "chatId", Value: dbObj["_id"]}},
 		},
 	}
 
@@ -104,24 +134,40 @@ func HandleAccessDirectMessage(dataSubjectId string, currentDbObjLocator pal.Loc
 	} else {
 		otherUserId = dbObj["user1"].(string)
 	}
+	otherUserIDObj, err := primitive.ObjectIDFromHex(otherUserId)
+	if err != nil {
+		panic(err)
+	}
 
 	data["Other User"] = pal.Locator{
-		LocatorType:    pal.Document,
-		DataType:       UserDataType,
-		CollectionPath: []string{"users"},
-		DocIDs:         []string{otherUserId},
+		LocatorType: pal.Document,
+		DataType:    UserDataType,
+		FirestoreLocator: pal.FirestoreLocator{
+			CollectionPath: []string{"users"},
+			DocIDs:         []string{otherUserId},
+		},
+		MongoLocator: pal.MongoLocator{
+			Collection: "users",
+			Filter:     bson.D{{Key: "_id", Value: otherUserIDObj}},
+		},
 	}
 	data["Messages"] = pal.Locator{
-		LocatorType:    pal.Collection,
-		DataType:       MessageDataType,
-		CollectionPath: append(currentDbObjLocator.CollectionPath, "messages"),
-		DocIDs:         currentDbObjLocator.DocIDs,
-		Queries: []pal.Query{
-			{
-				Path:  "userId",
-				Op:    "==",
-				Value: dataSubjectId,
+		LocatorType: pal.Collection,
+		DataType:    MessageDataType,
+		FirestoreLocator: pal.FirestoreLocator{
+			CollectionPath: append(currentDbObjLocator.FirestoreLocator.CollectionPath, "messages"),
+			DocIDs:         currentDbObjLocator.DocIDs,
+			Queries: []pal.Query{
+				{
+					Path:  "userId",
+					Op:    "==",
+					Value: dataSubjectId,
+				},
 			},
+		},
+		MongoLocator: pal.MongoLocator{
+			Collection: "messages",
+			Filter:     bson.D{{Key: "userId", Value: dataSubjectId}, {Key: "chatId", Value: dbObj["_id"]}},
 		},
 	}
 
