@@ -15,8 +15,7 @@ import (
 
 var Context context.Context
 var FirestoreClient *firestore.Client
-var MongoClient *mongo.Client
-var MongoDbName string
+var MongoDb *mongo.Database
 
 func init() {
 	err := godotenv.Load("../../../.env")
@@ -51,6 +50,5 @@ func InitMongoClient() {
 		panic(fmt.Errorf("mongo client error: %v", err))
 	}
 
-	MongoClient = client
-	MongoDbName = os.Getenv("MONGO_DB_NAME")
+	MongoDb = client.Database(os.Getenv("MONGO_DB_NAME"))
 }

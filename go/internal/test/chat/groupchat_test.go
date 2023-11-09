@@ -163,7 +163,7 @@ func TestMongo(t *testing.T) {
 		},
 	}
 
-	palClient := pal.NewClientWithMongo(test.MongoClient.Database(test.MongoDbName))
+	palClient := pal.NewClientWithMongo(test.MongoDb)
 	data, err := palClient.ProcessAccessRequest(HandleAccess, dataSubjectLocator, user1.ID)
 	if err != nil {
 		panic(err)
