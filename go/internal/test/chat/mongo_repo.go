@@ -249,19 +249,12 @@ func (u *User) SendMessageToGroupChatMongo(chatID string, message string) error 
 	// create message
 	newMessage := Message{
 		UserID:    u.ID,
+		ChatID:    chatID,
 		Content:   message,
 		Timestamp: time.Now(),
 	}
 
-	// write to mongo group chat collection
-	chatIDObj, err := primitive.ObjectIDFromHex(chatID)
-	if err != nil {
-		return fmt.Errorf("error converting ID to ObjectID: %v", err)
-	}
-
-	filter := bson.D{{Key: "_id", Value: chatIDObj}}
-	update := bson.M{"$push": bson.M{"messages": newMessage}}
-	_, err = test.MongoDb.Collection(FirestoreGroupChatCollection).UpdateOne(test.Context, filter, update)
+	_, err = test.MongoDb.Collection(FirestoreMessagesCollection).InsertOne(test.Context, newMessage)
 	if err != nil {
 		return fmt.Errorf("error creating message: %v", err)
 	}
@@ -284,19 +277,13 @@ func (u *User) SendMessageToDirectMessageMongo(chatID string, message string) er
 	// create message
 	newMessage := Message{
 		UserID:    u.ID,
+		ChatID:    chatID,
 		Content:   message,
 		Timestamp: time.Now(),
 	}
 
-	// write to mongo direct message collection
-	chatIDObj, err := primitive.ObjectIDFromHex(chatID)
-	if err != nil {
-		return fmt.Errorf("error converting ID to ObjectID: %v", err)
-	}
-
-	filter := bson.D{{Key: "_id", Value: chatIDObj}}
-	update := bson.M{"$addToSet": bson.M{"messages": newMessage}}
-	_, err = test.MongoDb.Collection(FirestoreDirectMessagesCollection).UpdateOne(test.Context, filter, update)
+	// write to mongo message collection
+	_, err = test.MongoDb.Collection(FirestoreMessagesCollection).InsertOne(test.Context, newMessage)
 	if err != nil {
 		return fmt.Errorf("error creating message: %v", err)
 	}

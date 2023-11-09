@@ -43,6 +43,7 @@ type DirectMessage struct {
 
 type Message struct {
 	ID        string    `firestore:"id,omitempty" bson:"_id,omitempty"`
+	ChatID    string    `firestore:"-" bson:"chatId"`
 	UserID    string    `firestore:"userId" bson:"userId"`
 	Content   string    `firestore:"content" bson:"content"`
 	Timestamp time.Time `firestore:"timestamp" bson:"timestamp"`

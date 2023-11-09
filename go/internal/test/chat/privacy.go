@@ -109,7 +109,7 @@ func HandleAccessGroupChat(dataSubjectId string, currentDbObjLocator pal.Locator
 		},
 		MongoLocator: pal.MongoLocator{
 			Collection: "messages",
-			Filter:     bson.D{{Key: "userId", Value: dataSubjectId}},
+			Filter:     bson.D{{Key: "userId", Value: dataSubjectId}, {Key: "chatId", Value: dbObj["_id"]}},
 		},
 	}
 
@@ -167,7 +167,7 @@ func HandleAccessDirectMessage(dataSubjectId string, currentDbObjLocator pal.Loc
 		},
 		MongoLocator: pal.MongoLocator{
 			Collection: "messages",
-			Filter:     bson.D{{Key: "userId", Value: dataSubjectId}},
+			Filter:     bson.D{{Key: "userId", Value: dataSubjectId}, {Key: "chatId", Value: dbObj["_id"]}},
 		},
 	}
 
