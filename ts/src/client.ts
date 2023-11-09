@@ -1,8 +1,8 @@
 
-import { Firestore } from 'firebase-admin/firestore';
-import { MongoClient } from 'mongodb';
+import { Firestore, UpdateData } from 'firebase-admin/firestore';
+import { MongoClient, UpdateFilter, Filter } from 'mongodb';
 import Database from './database';
-import { FirestoreLocator, HandleAccessFunc, MongoLocator, isLocator, validateLocator } from './model';
+import { FieldsToUpdate, FirestoreLocator, HandleAccessFunc, HandleDeletionFunc, MongoLocator, isLocator, validateLocator } from './model';
 
 class PrivacyPalClient<T extends FirestoreLocator | MongoLocator>{
 
@@ -23,10 +23,6 @@ class PrivacyPalClient<T extends FirestoreLocator | MongoLocator>{
         const data = await this.processAccessRequestHelper(handleAccess, dataSubject, dataSubjectId, dataSubjectLocator);
         return data;
         // TODO: maybe make all timestamp values human readable
-    }
-
-    async processDeletionRequest(dataSubjectLocator: T, dataSubjectId: string) {
-
     }
 
     private async processAccessRequestHelper(
@@ -87,6 +83,42 @@ class PrivacyPalClient<T extends FirestoreLocator | MongoLocator>{
             return retData;
         }
     }
+
+    async processDeletionRequest(handleDeletion: HandleDeletionFunc<T>, dataSubjectLocator: T, dataSubjectId: string, test: boolean) {
+        const { fieldsToUpdate, nodesToDelete } = await this.processDeletionRequestHelper(handleDeletion, dataSubjectId, dataSubjectLocator);
+        if (!test) {
+            await this.db.updateAndDelete(fieldsToUpdate, nodesToDelete);
+        }
+    }
+
+    private async processDeletionRequestHelper(
+        handleDeletion: HandleDeletionFunc<T>,
+        dataSubjectID: string,
+        locator: T,
+    ): Promise<{ fieldsToUpdate: FieldsToUpdate<T>[], nodesToDelete: T[] }> {
+        const { nodesToTraverse, deleteNode, fieldsToUpdate } = handleDeletion(dataSubjectID, locator)
+        let allFieldsToUpdate: FieldsToUpdate<T>[] = [];
+        let allNodesToDelete: T[] = [];
+
+        // 1. first recursively process nested nodes
+        if (nodesToTraverse.length > 0) {
+            for (const nodeLocator of nodesToTraverse) {
+                const { fieldsToUpdate, nodesToDelete } = await this.processDeletionRequestHelper(handleDeletion, dataSubjectID, nodeLocator);
+                allFieldsToUpdate = allFieldsToUpdate.concat(fieldsToUpdate);
+                allNodesToDelete = allNodesToDelete.concat(nodesToDelete);
+            }
+        }
+
+        // 2. delete current node if needed
+        if (deleteNode) {
+            allNodesToDelete.push(locator);
+        } else if (fieldsToUpdate && fieldsToUpdate.length > 0) {
+            // todo: should be locator.collection for mongo
+            allFieldsToUpdate = allFieldsToUpdate.concat({ locator: locator as T, fieldsToUpdate: fieldsToUpdate });
+        }
+        return { fieldsToUpdate: allFieldsToUpdate, nodesToDelete: allNodesToDelete };
+    }
+
 }
 
 export default PrivacyPalClient;
