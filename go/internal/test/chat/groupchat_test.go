@@ -8,63 +8,65 @@ import (
 	pal "github.com/privacy-pal/privacy-pal/pkg"
 )
 
-func Test1(t *testing.T) {
+func TestFirestore(t *testing.T) {
+	test.InitFirestoreClient()
+
 	// create user 1
-	user1, err := CreateUser("user1")
+	user1, err := CreateUserFirestore("user1")
 	if err != nil {
 		panic(err)
 	}
 
 	// creater user 2
-	user2, err := CreateUser("user2")
+	user2, err := CreateUserFirestore("user2")
 	if err != nil {
 		panic(err)
 	}
 
 	// user 1 creates groupchat
-	gc1, err := user1.CreateGroupChat()
+	gc1, err := user1.CreateGroupChatFirestore()
 	if err != nil {
 		panic(err)
 	}
 
 	// user 2 joins groupchat
-	err = user2.JoinOrQuitGroupChat(gc1.ID, JoinChat)
+	err = user2.JoinOrQuitGroupChatFirestore(gc1.ID, JoinChat)
 	if err != nil {
 		panic(err)
 	}
 
 	// user 1 sends message to groupchat
-	err = user1.SendMessageToGroupChat(gc1.ID, "hello")
+	err = user1.SendMessageToGroupChatFirestore(gc1.ID, "hello")
 	if err != nil {
 		panic(err)
 	}
 
 	// user 2 sends message to groupchat
-	err = user2.SendMessageToGroupChat(gc1.ID, "hi")
+	err = user2.SendMessageToGroupChatFirestore(gc1.ID, "hi")
 	if err != nil {
 		panic(err)
 	}
 
 	// user 1 sends another message to groupchat
-	err = user1.SendMessageToGroupChat(gc1.ID, "how are you?")
+	err = user1.SendMessageToGroupChatFirestore(gc1.ID, "how are you?")
 	if err != nil {
 		panic(err)
 	}
 
 	// user 2 creates direct message with user 1
-	dm1, err := user2.CreateDirectMessage(user1.ID)
+	dm1, err := user2.CreateDirectMessageFirestore(user1.ID)
 	if err != nil {
 		panic(err)
 	}
 
 	// user 2 sends message to direct message
-	err = user2.SendMessageToDirectMessage(dm1.ID, "Hey! We are in direct message")
+	err = user2.SendMessageToDirectMessageFirestore(dm1.ID, "Hey! We are in direct message")
 	if err != nil {
 		panic(err)
 	}
 
 	// user 1 sends message to direct message
-	err = user1.SendMessageToDirectMessage(dm1.ID, "Hello!")
+	err = user1.SendMessageToDirectMessageFirestore(dm1.ID, "Hello!")
 	if err != nil {
 		panic(err)
 	}
@@ -78,8 +80,91 @@ func Test1(t *testing.T) {
 		},
 	}
 
-	client := pal.NewClientWithFirestore(test.FirestoreClient)
-	data, err := client.ProcessAccessRequest(HandleAccess, dataSubjectLocator, user1.ID)
+	palClient := pal.NewClientWithFirestore(test.FirestoreClient)
+	data, err := palClient.ProcessAccessRequest(HandleAccess, dataSubjectLocator, user1.ID)
+	if err != nil {
+		panic(err)
+	}
+
+	json, err := json.Marshal(data)
+	if err != nil {
+		panic(err)
+	}
+	t.Log(string(json))
+}
+
+func TestMongo(t *testing.T) {
+	// create user 1
+	user1, err := CreateUserMongo("user1")
+	if err != nil {
+		panic(err)
+	}
+
+	// creater user 2
+	user2, err := CreateUserMongo("user2")
+	if err != nil {
+		panic(err)
+	}
+
+	// user 1 creates groupchat
+	gc1, err := user1.CreateGroupChatMongo()
+	if err != nil {
+		panic(err)
+	}
+
+	// user 2 joins groupchat
+	err = user2.JoinOrQuitGroupChatMongo(gc1.ID, JoinChat)
+	if err != nil {
+		panic(err)
+	}
+
+	// user 1 sends message to groupchat
+	err = user1.SendMessageToGroupChatMongo(gc1.ID, "hello")
+	if err != nil {
+		panic(err)
+	}
+
+	// user 2 sends message to groupchat
+	err = user2.SendMessageToGroupChatMongo(gc1.ID, "hi")
+	if err != nil {
+		panic(err)
+	}
+
+	// user 1 sends another message to groupchat
+	err = user1.SendMessageToGroupChatMongo(gc1.ID, "how are you?")
+	if err != nil {
+		panic(err)
+	}
+
+	// user 2 creates direct message with user 1
+	dm1, err := user2.CreateDirectMessageMongo(user1.ID)
+	if err != nil {
+		panic(err)
+	}
+
+	// user 2 sends message to direct message
+	err = user2.SendMessageToDirectMessageMongo(dm1.ID, "Hey! We are in direct message")
+	if err != nil {
+		panic(err)
+	}
+
+	// user 1 sends message to direct message
+	err = user1.SendMessageToDirectMessageMongo(dm1.ID, "Hello!")
+	if err != nil {
+		panic(err)
+	}
+
+	dataSubjectLocator := pal.Locator{
+		LocatorType: pal.Document,
+		DataType:    string(UserDataType),
+		FirestoreLocator: pal.FirestoreLocator{
+			CollectionPath: []string{FirestoreUsersCollection},
+			DocIDs:         []string{user1.ID},
+		},
+	}
+
+	palClient := pal.NewClientWithMongo(test.MongoClient, test.MongoDbName)
+	data, err := palClient.ProcessAccessRequest(HandleAccess, dataSubjectLocator, user1.ID)
 	if err != nil {
 		panic(err)
 	}

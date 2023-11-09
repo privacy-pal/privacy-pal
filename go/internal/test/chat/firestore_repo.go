@@ -8,11 +8,7 @@ import (
 	"github.com/privacy-pal/privacy-pal/internal/test"
 )
 
-func init() {
-	test.InitFirestoreClient()
-}
-
-func (u *User) CreateGroupChat() (chat *GroupChat, err error) {
+func (u *User) CreateGroupChatFirestore() (chat *GroupChat, err error) {
 	newChat := GroupChat{
 		Owner:    u.ID,
 		Users:    []string{},
@@ -37,7 +33,7 @@ func (u *User) CreateGroupChat() (chat *GroupChat, err error) {
 	return &newChat, nil
 }
 
-func GetGroupChat(ID string) (chat *GroupChat, err error) {
+func GetGroupChatFirestore(ID string) (chat *GroupChat, err error) {
 	doc, err := test.FirestoreClient.Collection(FirestoreGroupChatCollection).Doc(ID).Get(test.Context)
 	if err != nil {
 		return nil, fmt.Errorf("error getting group chat: %v", err)
@@ -57,7 +53,7 @@ func GetGroupChat(ID string) (chat *GroupChat, err error) {
 	return chat, nil
 }
 
-func CreateUser(name string) (user *User, err error) {
+func CreateUserFirestore(name string) (user *User, err error) {
 	newUser := User{
 		Name: name,
 		GCs:  []string{},
@@ -74,7 +70,7 @@ func CreateUser(name string) (user *User, err error) {
 	return &newUser, nil
 }
 
-func GetUser(ID string) (user *User, err error) {
+func GetUserFirestore(ID string) (user *User, err error) {
 	doc, err := test.FirestoreClient.Collection(FirestoreUsersCollection).Doc(ID).Get(test.Context)
 	if err != nil {
 		return nil, fmt.Errorf("error getting user: %v", err)
@@ -94,13 +90,13 @@ func GetUser(ID string) (user *User, err error) {
 	return user, nil
 }
 
-func (u *User) JoinOrQuitGroupChat(chatID string, action joinQuitAction) (err error) {
-	_, err = GetUser(u.ID)
+func (u *User) JoinOrQuitGroupChatFirestore(chatID string, action joinQuitAction) (err error) {
+	_, err = GetUserFirestore(u.ID)
 	if err != nil {
 		return fmt.Errorf("error getting user: %v", err)
 	}
 
-	_, err = GetGroupChat(chatID)
+	_, err = GetGroupChatFirestore(chatID)
 	if err != nil {
 		return fmt.Errorf("error getting group chat: %v", err)
 	}
@@ -141,9 +137,9 @@ func (u *User) JoinOrQuitGroupChat(chatID string, action joinQuitAction) (err er
 	return nil
 }
 
-func (u *User) CreateDirectMessage(user2ID string) (chat *DirectMessage, err error) {
+func (u *User) CreateDirectMessageFirestore(user2ID string) (chat *DirectMessage, err error) {
 	// check if user exists and if DM already exists
-	user2, err := GetUser(user2ID)
+	user2, err := GetUserFirestore(user2ID)
 	if err != nil {
 		return nil, fmt.Errorf("error getting user: %v", err)
 	}
@@ -186,7 +182,7 @@ func (u *User) CreateDirectMessage(user2ID string) (chat *DirectMessage, err err
 	return &newDM, nil
 }
 
-func GetDirectMessage(ID string) (chat *DirectMessage, err error) {
+func GetDirectMessageFirestore(ID string) (chat *DirectMessage, err error) {
 	doc, err := test.FirestoreClient.Collection(FirestoreDirectMessagesCollection).Doc(ID).Get(test.Context)
 	if err != nil {
 		return nil, fmt.Errorf("error getting direct message: %v", err)
@@ -206,9 +202,9 @@ func GetDirectMessage(ID string) (chat *DirectMessage, err error) {
 	return chat, nil
 }
 
-func (u *User) SendMessageToGroupChat(chatID string, message string) error {
+func (u *User) SendMessageToGroupChatFirestore(chatID string, message string) error {
 	// get the group chat
-	gc, err := GetGroupChat(chatID)
+	gc, err := GetGroupChatFirestore(chatID)
 	if err != nil {
 		return err
 	}
@@ -236,9 +232,9 @@ func (u *User) SendMessageToGroupChat(chatID string, message string) error {
 	return nil
 }
 
-func (u *User) SendMessageToDirectMessage(chatID string, message string) error {
+func (u *User) SendMessageToDirectMessageFirestore(chatID string, message string) error {
 	// get the direct message
-	dm, err := GetDirectMessage(chatID)
+	dm, err := GetDirectMessageFirestore(chatID)
 	if err != nil {
 		return err
 	}

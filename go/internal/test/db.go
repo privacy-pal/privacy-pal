@@ -16,6 +16,7 @@ import (
 var Context context.Context
 var FirestoreClient *firestore.Client
 var MongoClient *mongo.Client
+var MongoDbName string
 
 func init() {
 	err := godotenv.Load("../../../.env")
@@ -23,21 +24,21 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+
+	Context = context.TODO()
 }
 
 func InitFirestoreClient() {
-	ctx := context.TODO()
 	opt := option.WithCredentialsJSON([]byte(os.Getenv("FIREBASE_CONFIG")))
-	app, err := firebaseSDK.NewApp(ctx, nil, opt)
+	app, err := firebaseSDK.NewApp(Context, nil, opt)
 	if err != nil {
 		panic(err.Error())
 	}
 
-	FirestoreClient, err = app.Firestore(ctx)
+	FirestoreClient, err = app.Firestore(Context)
 	if err != nil {
 		panic(fmt.Errorf("firestore client error: %v", err))
 	}
-	Context = ctx
 }
 
 func InitMongoClient() {
@@ -45,11 +46,11 @@ func InitMongoClient() {
 	serverAPI := options.ServerAPI(options.ServerAPIVersion1)
 	opts := options.Client().ApplyURI(os.Getenv("MONGO_URI")).SetServerAPIOptions(serverAPI)
 	// Create a new client and connect to the server
-	client, err := mongo.Connect(context.TODO(), opts)
+	client, err := mongo.Connect(Context, opts)
 	if err != nil {
 		panic(fmt.Errorf("mongo client error: %v", err))
 	}
 
 	MongoClient = client
-	Context = context.TODO()
+	MongoDbName = os.Getenv("MONGO_DB_NAME")
 }
