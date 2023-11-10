@@ -41,9 +41,9 @@ class Database {
     async updateAndDelete(fieldsToUpdate: FieldsToUpdate<MongoLocator | FirestoreLocator>[], nodesToDelete: Locator[]): Promise<void> {
         switch (this.type) {
             case "firestore":
-                executeTransactionInFirestore(this.client as Firestore, fieldsToUpdate as FieldsToUpdate<FirestoreLocator>[], nodesToDelete as FirestoreLocator[])
+                return executeTransactionInFirestore(this.client as Firestore, fieldsToUpdate as FieldsToUpdate<FirestoreLocator>[], nodesToDelete as FirestoreLocator[])
             case "mongo":
-                executeTransactionInMongo(this.client as MongoClient, fieldsToUpdate as FieldsToUpdate<MongoLocator>[], nodesToDelete as MongoLocator[])
+                return executeTransactionInMongo(this.client as MongoClient, fieldsToUpdate as FieldsToUpdate<MongoLocator>[], nodesToDelete as MongoLocator[])
 
         }
     }

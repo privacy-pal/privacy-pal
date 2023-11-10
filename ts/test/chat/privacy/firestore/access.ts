@@ -1,9 +1,9 @@
 import { Filter } from "firebase-admin/firestore";
-import { FirestoreLocator, Locator } from "../../src/model";
-import GroupChat from "./model/gc";
-import Message from "./model/message";
-import { FirestoreCollections } from "./model/shared";
-import User from "./model/user";
+import { FirestoreLocator } from "../../../../src";
+import GroupChat from "../../model/gc";
+import Message from "../../model/message";
+import { FirestoreCollections } from "../../model/shared";
+import User from "../../model/user";
 
 export default function handleAccessFirestore(dataSubjectId: string, locator: FirestoreLocator, obj: any): Record<string, any> {
     switch (locator.dataType) {

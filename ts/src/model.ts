@@ -4,11 +4,12 @@ import { Filter, UpdateFilter } from 'mongodb';
 export type HandleAccessFunc<T extends FirestoreLocator | MongoLocator> =
     (dataSubjectId: string, locator: T, obj: any) => Record<string, any>
 
-export type HandleDeletionFunc<T extends FirestoreLocator | MongoLocator> = (dataSubjectId: string, locator: T) => {
-    nodesToTraverse: T[],
-    deleteNode: boolean,
-    fieldsToUpdate?: T extends MongoLocator ? UpdateFilter<any>[] : UpdateData<any>[]
-};
+export type HandleDeletionFunc<T extends FirestoreLocator | MongoLocator> =
+    (dataSubjectId: string, locator: T, obj: any) => {
+        nodesToTraverse: T[],
+        deleteNode: boolean,
+        fieldsToUpdate?: T extends MongoLocator ? UpdateFilter<any> | Partial<any> : UpdateData<any>
+    };
 
 export type Locator = FirestoreLocator | MongoLocator;
 

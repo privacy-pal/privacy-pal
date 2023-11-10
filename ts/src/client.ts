@@ -96,26 +96,36 @@ class PrivacyPalClient<T extends FirestoreLocator | MongoLocator>{
         dataSubjectID: string,
         locator: T,
     ): Promise<{ fieldsToUpdate: FieldsToUpdate<T>[], nodesToDelete: T[] }> {
-        const { nodesToTraverse, deleteNode, fieldsToUpdate } = handleDeletion(dataSubjectID, locator)
+        let dataNodes: any[] = [];
+        if (locator.singleDocument) {
+            const node = await this.db.getDocument(locator);
+            dataNodes.push(node);
+        } else {
+            const nodes = await this.db.getDocuments(locator);
+            dataNodes = dataNodes.concat(nodes);
+        }
         let allFieldsToUpdate: FieldsToUpdate<T>[] = [];
         let allNodesToDelete: T[] = [];
 
-        // 1. first recursively process nested nodes
-        if (nodesToTraverse.length > 0) {
-            for (const nodeLocator of nodesToTraverse) {
-                const { fieldsToUpdate, nodesToDelete } = await this.processDeletionRequestHelper(handleDeletion, dataSubjectID, nodeLocator);
-                allFieldsToUpdate = allFieldsToUpdate.concat(fieldsToUpdate);
-                allNodesToDelete = allNodesToDelete.concat(nodesToDelete);
+        for (const currentDataNode of dataNodes) {
+            const { nodesToTraverse, deleteNode, fieldsToUpdate } = handleDeletion(dataSubjectID, locator, currentDataNode)
+            // 1. first recursively process nested nodes
+            if (nodesToTraverse.length > 0) {
+                for (const nodeLocator of nodesToTraverse) {
+                    const { fieldsToUpdate, nodesToDelete } = await this.processDeletionRequestHelper(handleDeletion, dataSubjectID, nodeLocator);
+                    allFieldsToUpdate = allFieldsToUpdate.concat(fieldsToUpdate);
+                    allNodesToDelete = allNodesToDelete.concat(nodesToDelete);
+                }
+            }
+
+            // 2. delete current node if needed
+            if (deleteNode) {
+                allNodesToDelete.push(locator);
+            } else if (fieldsToUpdate) {
+                allFieldsToUpdate.push({ locator: locator as T, fieldsToUpdate: fieldsToUpdate });
             }
         }
 
-        // 2. delete current node if needed
-        if (deleteNode) {
-            allNodesToDelete.push(locator);
-        } else if (fieldsToUpdate && fieldsToUpdate.length > 0) {
-            // todo: should be locator.collection for mongo
-            allFieldsToUpdate = allFieldsToUpdate.concat({ locator: locator as T, fieldsToUpdate: fieldsToUpdate });
-        }
         return { fieldsToUpdate: allFieldsToUpdate, nodesToDelete: allNodesToDelete };
     }
 

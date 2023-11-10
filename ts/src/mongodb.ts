@@ -1,6 +1,5 @@
-import { MongoClient, ObjectId, UpdateFilter } from "mongodb";
+import { MongoClient } from "mongodb";
 import { FieldsToUpdate, Locator, MongoLocator } from "./model";
-import { UpdateData } from "firebase-admin/firestore";
 
 export async function getDocumentFromMongo(db: MongoClient, locator: MongoLocator): Promise<any> {
     return db.db().collection(locator.collection).findOne(locator.filter)
@@ -18,19 +17,22 @@ export async function executeTransactionInMongo(
     const session = db.startSession();
     try {
         await session.withTransaction(async () => {
+            let promises = [];
             // delete nodes
             for (const nodeLocator of nodesToDelete) {
                 const locator = nodeLocator as MongoLocator;
-                await db.db().collection(locator.collection).deleteOne(locator.filter, { session });
+                promises.push(db.db().collection(locator.collection).deleteOne(locator.filter, { session }));
             }
 
             // update nodes
             for (const { locator, fieldsToUpdate } of toUpdate) {
-                await db.db().collection(locator.collection).updateOne(locator.filter, fieldsToUpdate, { session });
+                promises.push(db.db().collection(locator.collection).updateOne(locator.filter, fieldsToUpdate, { session }));
             }
+
+            await Promise.all(promises);
         });
     } catch (err) {
-        console.log(err);
+        throw "Transaction aborted: " + err;
     } finally {
         await session.endSession();
         await db.close();
