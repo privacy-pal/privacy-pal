@@ -3,11 +3,11 @@
 ## Testing
 1. Under root, run the following to generate the code stub:
 ```
-go run cmd/genpal.go -mode=yamlspec -input=internal/chat/privacypal.yaml -output=internal/chat/privacy.go
+go run cmd/genpal.go -mode=yamlspec -input=internal/test/chat/privacypal.yaml -output=internal/test/chat/privacy.go
 ```
 2. Run tests on the chat application
 ```
-cd internal/chat
+cd internal/test/chat
 go test -v ./...
 ```
 
