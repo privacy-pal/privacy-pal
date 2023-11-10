@@ -1,5 +1,5 @@
-import { CollectionReference, FieldPath, Firestore, Query, WhereFilterOp } from "firebase-admin/firestore";
-import { FirestoreLocator } from "./model";
+import { CollectionReference, FieldPath, Firestore, Query, UpdateData, WhereFilterOp } from "firebase-admin/firestore";
+import { FieldsToUpdate, FirestoreLocator } from "./model";
 
 export async function getDocumentFromFirestore(db: Firestore, locator: FirestoreLocator): Promise<any> {
     let docRef = db.collection(locator.collectionPath[0]).doc(locator.docIds[0]);
@@ -48,4 +48,42 @@ export async function getDocumentsFromFirestore(db: Firestore, locator: Firestor
         .catch((err) => {
             throw new Error('Error getting documents: ' + err);
         });
+}
+
+export async function executeTransactionInFirestore(
+    db: Firestore,
+    toUpdate: FieldsToUpdate<FirestoreLocator>[],
+    nodesToDelete: FirestoreLocator[]
+) {
+    try {
+        await db.runTransaction(async (t) => {
+            // delete nodes
+            let promises = [];
+            for (const nodeLocator of nodesToDelete) {
+                let docRef = db.collection(nodeLocator.collectionPath[0]).doc(nodeLocator.docIds[0]);
+
+                for (let i = 1; i < nodeLocator.collectionPath.length; i++) {
+                    docRef = docRef.collection(nodeLocator.collectionPath[i]).doc(nodeLocator.docIds[i]);
+                }
+
+                promises.push(t.delete(docRef));
+            }
+
+            // update nodes
+            for (const { locator, fieldsToUpdate } of toUpdate) {
+                let docRef = db.collection(locator.collectionPath[0]).doc(locator.docIds[0]);
+
+                for (let i = 1; i < locator.collectionPath.length; i++) {
+                    docRef = docRef.collection(locator.collectionPath[i]).doc(locator.docIds[i]);
+                }
+
+                promises.push(t.update(docRef, fieldsToUpdate));
+            }
+
+            await Promise.all(promises);
+        });
+        console.log("Privacy Pal: successfully updated and deleted data")
+    } catch (err) {
+        console.log(err)
+    }
 }

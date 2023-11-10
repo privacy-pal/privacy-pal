@@ -5,10 +5,13 @@ import TestDatabase from "../testDB";
 import { GetGroupChat } from "./db/gc";
 import { CreateUser } from "./db/user";
 import { FirestoreCollections, JoinQuitAction } from "./model/shared";
-import handleAccessMongo from "./privacyMongo";
-import handleAccessFirestore from "./privacyFirestore";
+import handleAccessMongo from "./privacy/mongo/access";
+import handleAccessFirestore from "./privacy/firestore/access";
+import handleDeletionMongo from "./privacy/mongo/deletion";
 
-async function testMongo() {
+const DELETION = true
+
+async function testMongo(deletion: boolean) {
     await TestDatabase.initializeDB("mongo");
 
     // create user 1
@@ -50,7 +53,7 @@ async function testMongo() {
     console.log("Starting to test privacy pal")
 
     const privacyPalClient = new PrivacyPalClient<MongoLocator>(TestDatabase.mongoClient);
-    const dataSubjectLocator: MongoLocator = {
+    const user1Locator: MongoLocator = {
         dataType: 'user',
         singleDocument: true,
         collection: FirestoreCollections.Users,
@@ -59,11 +62,27 @@ async function testMongo() {
         }
     }
 
-    const res = await privacyPalClient.processAccessRequest(handleAccessMongo, dataSubjectLocator, user1.id)
+    const res = await privacyPalClient.processAccessRequest(handleAccessMongo, user1Locator, user1.id)
     console.log(JSON.stringify(res))
+
+    if (deletion) {
+        const user2Locator: MongoLocator = {
+            dataType: 'user',
+            singleDocument: true,
+            collection: FirestoreCollections.Users,
+            filter: {
+                _id: new ObjectId(user2.id)
+            }
+        }
+        await privacyPalClient.processDeletionRequest(handleDeletionMongo, user2Locator, user2.id, false)
+
+        console.log("finished deletion")
+        // const res = await privacyPalClient.processAccessRequest(handleAccessMongo, dataSubjectLocator, user1.id)
+        // console.log(JSON.stringify(res))
+    }
 }
 
-async function testFirestore() {
+async function testFirestore(deletion: boolean = false) {
     await TestDatabase.initializeDB("firestore");
 
     // create user 1
@@ -117,6 +136,6 @@ async function testFirestore() {
     console.log(JSON.stringify(res))
 }
 
-testMongo().then(() => TestDatabase.cleanupDB())
+testMongo(DELETION).then(() => TestDatabase.cleanupDB())
 // testFirestore().then(() => TestDatabase.cleanupDB())
 

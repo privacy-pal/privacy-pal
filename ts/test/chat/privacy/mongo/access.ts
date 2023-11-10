@@ -1,9 +1,9 @@
 import { ObjectId } from "mongodb";
-import { MongoLocator } from "../../src/model";
-import GroupChat from "./model/gc";
-import Message from "./model/message";
-import { FirestoreCollections } from "./model/shared";
-import User from "./model/user";
+import { MongoLocator } from "../../../../src/model";
+import GroupChat from "../../model/gc";
+import Message from "../../model/message";
+import { FirestoreCollections } from "../../model/shared";
+import User from "../../model/user";
 
 export default function handleAccessMongo(dataSubjectId: string, locator: MongoLocator, obj: any): Record<string, any> {
     switch (locator.dataType) {
