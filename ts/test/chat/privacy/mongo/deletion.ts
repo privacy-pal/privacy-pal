@@ -4,6 +4,7 @@ import GroupChat from "../../model/gc";
 import Message from "../../model/message";
 import { FirestoreCollections } from "../../model/shared";
 import User from "../../model/user";
+import DirectMessage from "../../model/dm";
 
 export default function handleDeletionMongo(dataSubjectId: string, locator: MongoLocator, obj: any): {
     nodesToTraverse: MongoLocator[],
@@ -19,6 +20,10 @@ export default function handleDeletionMongo(dataSubjectId: string, locator: Mong
             const groupChat = obj as GroupChat;
             groupChat.id = obj._id.toString();
             return handleDeletionGroupChat(dataSubjectId, locator, groupChat);
+        case 'directMessage':
+            const directMessage = obj as DirectMessage;
+            directMessage.id = obj._id.toString();
+            return handleDeletionDirectMessage(dataSubjectId, locator, directMessage);
         case 'message':
             const message = obj as Message;
             message.id = obj._id.toString();
@@ -33,16 +38,6 @@ function handleDeletionGroupChat(dataSubjectId: string, locator: MongoLocator, o
     deleteNode: boolean,
     fieldsToUpdate?: UpdateFilter<any> | Partial<any>
 } {
-    const deleteNode = obj.owner === dataSubjectId;
-    let fieldsToUpdate: UpdateFilter<any> | Partial<any> = {};
-    if (!deleteNode) {
-        // remove dataSubjectId from users field
-        fieldsToUpdate = {
-            $pull: {
-                users: dataSubjectId
-            }
-        }
-    }
     return {
         nodesToTraverse: [{
             dataType: 'message',
@@ -51,10 +46,19 @@ function handleDeletionGroupChat(dataSubjectId: string, locator: MongoLocator, o
             filter: {
                 userID: dataSubjectId,
                 chatID: obj.id
+            },
+            context: {
+                anonymize: true
             }
         }],
-        deleteNode: deleteNode,
-        fieldsToUpdate: fieldsToUpdate
+        deleteNode: obj.owner === dataSubjectId,
+        fieldsToUpdate: obj.owner === dataSubjectId ? undefined :
+            // remove dataSubjectId from users field
+            {
+                $pull: {
+                    users: dataSubjectId
+                }
+            }
     };
 };
 
@@ -66,18 +70,72 @@ function handleDeletionUser(dataSubjectId: string, locator: MongoLocator, obj: U
     if (obj.id !== dataSubjectId) {
         throw new Error(`User ${dataSubjectId} cannot delete another user ${obj.id}`);
     }
-    return {
-        nodesToTraverse: obj.gcs.map((gc: string): MongoLocator => {
-            return {
-                dataType: 'groupChat',
-                singleDocument: true,
-                collection: FirestoreCollections.GroupChat,
-                filter: {
-                    _id: new ObjectId(gc)
-                }
+
+    const GCsToTraverse = obj.gcs.map((gc: string): MongoLocator => {
+        return {
+            dataType: 'groupChat',
+            singleDocument: true,
+            collection: FirestoreCollections.GroupChat,
+            filter: {
+                _id: new ObjectId(gc)
             }
-        }),
+        }
+    })
+
+    const DMsToTraverse = Object.values(obj.dms).map((dm: string): MongoLocator => {
+        return {
+            dataType: 'directMessage',
+            singleDocument: true,
+            collection: FirestoreCollections.DirectMessages,
+            filter: {
+                _id: new ObjectId(dm)
+            }
+        }
+    })
+
+    return {
+        nodesToTraverse: [...GCsToTraverse, ...DMsToTraverse],
         deleteNode: true,
+    };
+}
+
+function handleDeletionDirectMessage(dataSubjectId: string, locator: MongoLocator, obj: DirectMessage): {
+    nodesToTraverse: MongoLocator[],
+    deleteNode: boolean,
+    fieldsToUpdate?: UpdateFilter<any> | Partial<any>
+} {
+    let otherUserId: string;
+    let thisUserField: string;
+    if (obj.user1 === dataSubjectId) {
+        thisUserField = 'user1';
+        otherUserId = obj.user2;
+    } else if (obj.user2 === dataSubjectId) {
+        thisUserField = 'user2';
+        otherUserId = obj.user1;
+    } else {
+        throw new Error(`User ${dataSubjectId} does not have access to direct message ${obj.id}`);
+    }
+
+    return {
+        // TODO: locator should probably have some sort of context to be passed to the next object
+        nodesToTraverse: [{
+            dataType: 'message',
+            singleDocument: false,
+            collection: FirestoreCollections.Messages,
+            filter: {
+                userID: dataSubjectId,
+                chatID: obj.id
+            },
+            context: {
+                anonymize: true
+            }
+        }],
+        deleteNode: otherUserId === "anonymous",
+        fieldsToUpdate: {
+            $set: {
+                [thisUserField]: 'anonymous'
+            }
+        }
     };
 }
 
@@ -86,8 +144,15 @@ function handleDeletionMessage(dataSubjectId: string, locator: MongoLocator, obj
     deleteNode: boolean,
     fieldsToUpdate?: UpdateFilter<any> | Partial<any>
 } {
+    const fieldsToUpdate = (obj.userID === dataSubjectId && locator.context.anonymize) ?
+        {
+            $set: {
+                userID: 'anonymous'
+            }
+        } : undefined;
     return {
         nodesToTraverse: [],
-        deleteNode: obj.userID === dataSubjectId,
+        deleteNode: obj.userID === dataSubjectId && !locator.context.anonymize,
+        fieldsToUpdate: fieldsToUpdate
     };
 };

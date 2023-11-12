@@ -33,6 +33,7 @@ export interface FieldsToUpdate<T extends FirestoreLocator | MongoLocator> {
 interface LocatorBase {
     dataType: string;
     singleDocument: boolean; // whether the output document(s) should be nested in an array
+    context?: any; // any additional information to be passed to the handleAccess or handleDeletion function
 }
 
 export function validateLocator(locator: FirestoreLocator | MongoLocator): Error | null {

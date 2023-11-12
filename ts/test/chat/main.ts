@@ -9,8 +9,6 @@ import handleAccessMongo from "./privacy/mongo/access";
 import handleAccessFirestore from "./privacy/firestore/access";
 import handleDeletionMongo from "./privacy/mongo/deletion";
 
-const DELETION = false
-
 async function testMongo(deletion: boolean) {
     await TestDatabase.initializeDB("mongo");
 
@@ -149,6 +147,7 @@ async function testFirestore(deletion: boolean = false) {
     console.log(JSON.stringify(res))
 }
 
-// testMongo(DELETION).then(() => TestDatabase.cleanupDB())
-testFirestore().then(() => TestDatabase.cleanupDB())
+const DELETION = true
+testMongo(DELETION).then(() => TestDatabase.cleanupDB())
+// testFirestore().then(() => TestDatabase.cleanupDB())
 
