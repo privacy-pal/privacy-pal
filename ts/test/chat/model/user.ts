@@ -147,11 +147,13 @@ export default class User {
             }
 
             if (user2.dms && user2.dms[this.id]) {
-                throw new Error('Direct message already exists');
+                const dm = await GetDirectMessage(user2.dms[this.id]);
+                return dm;
             }
 
             if (this.dms && this.dms[user2ID]) {
-                throw new Error('Direct message already exists');
+                const dm = await GetDirectMessage(this.dms[user2ID]);
+                return dm;
             }
 
             const newDM = new DirectMessage(this.id, user2ID);

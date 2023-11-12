@@ -9,7 +9,7 @@ import handleAccessMongo from "./privacy/mongo/access";
 import handleAccessFirestore from "./privacy/firestore/access";
 import handleDeletionMongo from "./privacy/mongo/deletion";
 
-const DELETION = true
+const DELETION = false
 
 async function testMongo(deletion: boolean) {
     await TestDatabase.initializeDB("mongo");
@@ -49,6 +49,19 @@ async function testMongo(deletion: boolean) {
 
     // user 1 sends another message to groupchat
     await user1.SendMessageToGroupChat(groupChat.id, 'hello again');
+
+    // user 2 creates direct message with user 1
+    let dm = await user2.CreateDirectMessage(user1.id);
+
+    if (!dm) {
+        console.error('Direct Message not found');
+        return;
+    }
+    // user 2 sends message to direct message
+    await user2.SendMessageToDirectMessage(dm.id, "Hey! We are in direct message");
+
+    // user 1 sends message to direct message
+    await user1.SendMessageToDirectMessage(dm.id, "Hello!");
 
     console.log("Starting to test privacy pal")
 
@@ -136,6 +149,6 @@ async function testFirestore(deletion: boolean = false) {
     console.log(JSON.stringify(res))
 }
 
-testMongo(DELETION).then(() => TestDatabase.cleanupDB())
-// testFirestore().then(() => TestDatabase.cleanupDB())
+// testMongo(DELETION).then(() => TestDatabase.cleanupDB())
+testFirestore().then(() => TestDatabase.cleanupDB())
 

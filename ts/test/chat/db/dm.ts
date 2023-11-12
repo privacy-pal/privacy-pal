@@ -6,7 +6,7 @@ import { ObjectId } from "mongodb";
 export async function GetDirectMessage(ID: string): Promise<DirectMessage | null> {
     try {
         if (TestDatabase.database === "firestore") {
-            const doc = await TestDatabase.firestoreClient.collection(FirestoreCollections.Messages).doc(ID).get();
+            const doc = await TestDatabase.firestoreClient.collection(FirestoreCollections.DirectMessages).doc(ID).get();
 
             if (!doc.exists) {
                 throw new Error(doesNotExistError);
@@ -24,7 +24,7 @@ export async function GetDirectMessage(ID: string): Promise<DirectMessage | null
 
             return dm;
         } else if (TestDatabase.database === "mongo") {
-            const doc = await TestDatabase.mongoClient.db().collection(FirestoreCollections.Messages).findOne({ _id: new ObjectId(ID) });
+            const doc = await TestDatabase.mongoClient.db().collection(FirestoreCollections.DirectMessages).findOne({ _id: new ObjectId(ID) });
 
             if (!doc) {
                 throw new Error(doesNotExistError);
