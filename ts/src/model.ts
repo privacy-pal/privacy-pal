@@ -36,21 +36,28 @@ interface LocatorBase {
 }
 
 export function validateLocator(locator: FirestoreLocator | MongoLocator): Error | null {
-    // if (!locator.collectionPath || locator.collectionPath.length === 0) {
-    //     return new Error("Locator must have a collectionPath");
-    // }
+    if (isFirestoreLocator(locator)) {
+        if (!locator.collectionPath || locator.collectionPath.length === 0) {
+            return new Error("Locator must have a collectionPath");
+        }
 
-    // if (locator.locatorType == LocatorType.Document && locator.docIds.length != locator.collectionPath.length) {
-    //     return new Error("Document locator must have the same number of docIds as collectionPath elements");
-    // }
-
-    // if (locator.locatorType == LocatorType.Collection && locator.docIds.length != locator.collectionPath.length - 1) {
-    //     return new Error("Collection locator must have one less docId than collectionPath elements");
-    // }
-
+        if (locator.singleDocument) {
+            if (locator.docIds.length != locator.collectionPath.length) {
+                return new Error("Single Document locator must have the same number of docIds as collectionPath elements");
+            }
+        } else {
+            if (locator.docIds.length != locator.collectionPath.length - 1) {
+                return new Error("Multi Document locator must have one less docId than collectionPath elements");
+            }
+        }
+    }
     return null;
 }
 
 export function isLocator<T extends FirestoreLocator | MongoLocator>(obj: any): obj is T {
     return obj.dataType && (obj.singleDocument !== undefined);
+}
+
+function isFirestoreLocator(obj: any): obj is FirestoreLocator {
+    return obj.collectionPath && obj.docIds;
 }
