@@ -133,6 +133,18 @@ async function testFirestore(deletion: boolean = false) {
     // user 1 sends another message to groupchat
     await user1.SendMessageToGroupChat(groupChat.id, 'hello again');
 
+    // user 2 creates direct message with user 1
+    let dm = await user2.CreateDirectMessage(user1.id);
+
+    if (!dm) {
+        console.error('Direct Message not found');
+        return;
+    }
+    // user 2 sends message to direct message
+    await user2.SendMessageToDirectMessage(dm.id, "Hey! We are in direct message");
+
+    // user 1 sends message to direct message
+    await user1.SendMessageToDirectMessage(dm.id, "Hello!");
 
     const privacyPalClient = new PrivacyPalClient<FirestoreLocator>(TestDatabase.firestoreClient);
 

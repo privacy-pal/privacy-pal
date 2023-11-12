@@ -13,7 +13,9 @@ export async function getDocumentFromFirestore(db: Firestore, locator: Firestore
             if (!doc.exists) {
                 throw new Error("Document does not exist");
             }
-            return doc.data();
+            let data = doc.data();
+            data!._id = doc.id;
+            return data;
         })
         .catch((err) => {
             throw new Error('Error getting document: ' + err);
@@ -40,8 +42,9 @@ export async function getDocumentsFromFirestore(db: Firestore, locator: Firestor
         .then((snapshot) => {
             let dataNodes: any[] = [];
             snapshot.forEach((doc) => {
-                // TODO: verify
-                dataNodes.push(doc.data());
+                let data = doc.data();
+                data!._id = doc.id;
+                dataNodes.push(data);
             });
             return dataNodes;
         })
