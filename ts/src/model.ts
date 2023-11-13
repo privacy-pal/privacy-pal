@@ -56,7 +56,7 @@ export function validateLocator(locator: FirestoreLocator | MongoLocator): Error
 }
 
 export function isLocator<T extends FirestoreLocator | MongoLocator>(obj: any): obj is T {
-    return obj.dataType && (obj.singleDocument !== undefined);
+    return obj && obj.dataType && (obj.singleDocument !== undefined);
 }
 
 function isFirestoreLocator(obj: any): obj is FirestoreLocator {

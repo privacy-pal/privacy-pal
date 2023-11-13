@@ -36,7 +36,9 @@ class PrivacyPalClient<T extends FirestoreLocator | MongoLocator>{
         let report: Record<string, any> = {};
 
         for (const [key, value] of Object.entries(data)) {
-            if (isLocator(value)) {
+            if (value === undefined || value === null) {
+                continue;
+            } else if (isLocator(value)) {
                 // if locator, recursively process
                 const retData = await this.processLocator(handleAccess, value as T, dataSubjectID);
                 report[key] = retData;

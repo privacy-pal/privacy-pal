@@ -10,6 +10,7 @@ export default function handleAccessMongo(dataSubjectId: string, locator: MongoL
     switch (locator.dataType) {
         case 'user':
             const user = obj as User;
+            // TODO: should we always convert _id to string after reading from database?
             user.id = obj._id.toString();
             return handleAccessUser(dataSubjectId, locator, user);
         case 'groupChat':
