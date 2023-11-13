@@ -1,6 +1,6 @@
 
-import { Firestore, UpdateData } from 'firebase-admin/firestore';
-import { MongoClient, UpdateFilter, Filter } from 'mongodb';
+import { Firestore } from 'firebase-admin/firestore';
+import { MongoClient } from 'mongodb';
 import Database from './database';
 import { FieldsToUpdate, FirestoreLocator, HandleAccessFunc, HandleDeletionFunc, MongoLocator, isLocator, validateLocator } from './model';
 
