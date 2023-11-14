@@ -1,6 +1,8 @@
 package chat
 
 import (
+	"log"
+
 	pal "github.com/privacy-pal/privacy-pal/pkg"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -48,7 +50,7 @@ func HandleAccessUser(dataSubjectId string, currentDbObjLocator pal.Locator, dbO
 		id := id.(string)
 		objectID, err := primitive.ObjectIDFromHex(id)
 		if err != nil {
-			panic(err)
+			log.Println(err)
 		}
 
 		data["Groupchats"] = append(data["Groupchats"].([]pal.Locator), pal.Locator{
@@ -70,7 +72,7 @@ func HandleAccessUser(dataSubjectId string, currentDbObjLocator pal.Locator, dbO
 		dmID := dmID.(string)
 		dmIDObj, err := primitive.ObjectIDFromHex(dmID)
 		if err != nil {
-			panic(err)
+			log.Println(err)
 		}
 
 		data["DirectMessages"] = append(data["DirectMessages"].([]pal.Locator), pal.Locator{
@@ -136,7 +138,7 @@ func HandleAccessDirectMessage(dataSubjectId string, currentDbObjLocator pal.Loc
 	}
 	otherUserIDObj, err := primitive.ObjectIDFromHex(otherUserId)
 	if err != nil {
-		panic(err)
+		log.Println(err)
 	}
 
 	data["Other User"] = pal.Locator{
