@@ -1,19 +1,21 @@
 import { configDotenv } from "dotenv";
 import { cert, initializeApp } from "firebase-admin/app";
 import { Firestore, getFirestore } from "firebase-admin/firestore";
-import { MongoClient } from "mongodb";
+import { MongoClient, Db } from "mongodb";
 
 export default class TestDatabase {
     public static mongoClient: MongoClient;
+    public static mongoDb: Db;
     public static firestoreClient: Firestore;
     public static database: "mongo" | "firestore";
 
     public static async initializeDB(database: "mongo" | "firestore") {
         configDotenv();
         if (database === "mongo") {
-            const client = new MongoClient(process.env.MONGO_DB_URI as string);
+            const client = new MongoClient(process.env.MONGO_URI as string);
             await client.connect()
             TestDatabase.mongoClient = client;
+            TestDatabase.mongoDb = client.db(process.env.MONGO_DB_NAME as string);
         } else if (database === "firestore") {
             initializeApp({
                 credential: cert({

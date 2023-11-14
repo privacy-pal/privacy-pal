@@ -1,6 +1,6 @@
 
 import { Firestore } from 'firebase-admin/firestore';
-import { MongoClient } from 'mongodb';
+import { MongoClient, Db } from 'mongodb';
 import Database from './database';
 import { FieldsToUpdate, FirestoreLocator, HandleAccessFunc, HandleDeletionFunc, MongoLocator, isLocator, validateLocator } from './model';
 
@@ -8,8 +8,8 @@ class PrivacyPalClient<T extends FirestoreLocator | MongoLocator>{
 
     db: Database;
 
-    constructor(client: Firestore | MongoClient) {
-        this.db = new Database(client);
+    constructor(client: Firestore | MongoClient, mongoDb?: Db) {
+        this.db = new Database(client, mongoDb);
     }
 
     async processAccessRequest(handleAccess: HandleAccessFunc<T>, dataSubjectLocator: T, dataSubjectId: string) {

@@ -40,11 +40,11 @@ export default class User {
                 this.gcs.push(newChat.id);
                 return newChat;
             } else if (TestDatabase.database === "mongo") {
-                const doc = await TestDatabase.mongoClient.db().collection(FirestoreCollections.GroupChat).insertOne(Object.assign({}, newChat));
+                const doc = await TestDatabase.mongoDb.collection(FirestoreCollections.GroupChat).insertOne(Object.assign({}, newChat));
                 newChat.id = doc.insertedId.toString();
 
                 // Add the group chat to the user
-                await TestDatabase.mongoClient.db().collection(FirestoreCollections.Users).updateOne(
+                await TestDatabase.mongoDb.collection(FirestoreCollections.Users).updateOne(
                     { _id: new ObjectId(this.id) },
                     {
                         $push: {
@@ -106,7 +106,7 @@ export default class User {
                 }
 
                 // Update the group chat
-                await TestDatabase.mongoClient.db().collection(FirestoreCollections.GroupChat).updateOne(
+                await TestDatabase.mongoDb.collection(FirestoreCollections.GroupChat).updateOne(
                     { _id: new ObjectId(chatID) },
                     updates
                 );
@@ -124,7 +124,7 @@ export default class User {
                     };
                 }
 
-                await TestDatabase.mongoClient.db().collection(FirestoreCollections.Users).updateOne(
+                await TestDatabase.mongoDb.collection(FirestoreCollections.Users).updateOne(
                     { _id: new ObjectId(this.id) },
                     updates
                 );
@@ -185,11 +185,11 @@ export default class User {
                 return newDM;
 
             } else if (TestDatabase.database === "mongo") {
-                const doc = await TestDatabase.mongoClient.db().collection(FirestoreCollections.DirectMessages).insertOne(Object.assign({}, newDM));
+                const doc = await TestDatabase.mongoDb.collection(FirestoreCollections.DirectMessages).insertOne(Object.assign({}, newDM));
                 newDM.id = doc.insertedId.toString();
 
                 // Add the DM to both users
-                await TestDatabase.mongoClient.db().collection(FirestoreCollections.Users).updateOne(
+                await TestDatabase.mongoDb.collection(FirestoreCollections.Users).updateOne(
                     { _id: new ObjectId(this.id) },
                     {
                         $set: {
@@ -198,7 +198,7 @@ export default class User {
                     }
                 );
 
-                await TestDatabase.mongoClient.db().collection(FirestoreCollections.Users).updateOne(
+                await TestDatabase.mongoDb.collection(FirestoreCollections.Users).updateOne(
                     { _id: new ObjectId(user2ID) },
                     {
                         $set: {
@@ -245,7 +245,7 @@ export default class User {
 
             } else if (TestDatabase.database === "mongo") {
                 // Write the message to a Mongo collection
-                await TestDatabase.mongoClient.db().collection(FirestoreCollections.Messages)
+                await TestDatabase.mongoDb.collection(FirestoreCollections.Messages)
                     .insertOne(Object.assign({}, newMessage));
             } else {
                 throw new Error("Database not initialized");
@@ -283,7 +283,7 @@ export default class User {
                 newMessage.id = ref.id;
             } else if (TestDatabase.database === "mongo") {
                 // Write the message to a Mongo collection
-                await TestDatabase.mongoClient.db().collection(FirestoreCollections.Messages)
+                await TestDatabase.mongoDb.collection(FirestoreCollections.Messages)
                     .insertOne(Object.assign({}, newMessage));
             } else {
                 throw new Error("Database not initialized");

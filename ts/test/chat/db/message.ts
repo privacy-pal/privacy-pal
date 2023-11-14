@@ -25,7 +25,7 @@ export async function GetMessage(ID: string): Promise<DirectMessage | null> {
             return dm;
 
         } else if (TestDatabase.database === "mongo") {
-            const doc = await TestDatabase.mongoClient.db().collection(FirestoreCollections.Messages).findOne({ _id: new ObjectId(ID) });
+            const doc = await TestDatabase.mongoDb.collection(FirestoreCollections.Messages).findOne({ _id: new ObjectId(ID) });
 
             if (!doc) {
                 throw new Error(doesNotExistError);

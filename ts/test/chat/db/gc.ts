@@ -25,7 +25,7 @@ export async function GetGroupChat(ID: string): Promise<GroupChat | null> {
 
             return chat;
         } else if (TestDatabase.database === "mongo") {
-            const doc = await TestDatabase.mongoClient.db().collection(FirestoreCollections.GroupChat).findOne({ _id: new ObjectId(ID) });
+            const doc = await TestDatabase.mongoDb.collection(FirestoreCollections.GroupChat).findOne({ _id: new ObjectId(ID) });
 
             if (!doc) {
                 throw new Error(doesNotExistError);

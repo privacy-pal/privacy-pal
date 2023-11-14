@@ -1,32 +1,33 @@
-import { MongoClient } from "mongodb";
+import { MongoClient, Db } from "mongodb";
 import { FieldsToUpdate, Locator, MongoLocator } from "./model";
 
-export async function getDocumentFromMongo(db: MongoClient, locator: MongoLocator): Promise<any> {
-    return db.db().collection(locator.collection).findOne(locator.filter)
+export async function getDocumentFromMongo(db: Db, locator: MongoLocator): Promise<any> {
+    return db.collection(locator.collection).findOne(locator.filter)
 }
 
-export async function getDocumentsFromMongo(db: MongoClient, locator: MongoLocator): Promise<any> {
-    return db.db().collection(locator.collection).find(locator.filter).toArray()
+export async function getDocumentsFromMongo(db: Db, locator: MongoLocator): Promise<any> {
+    return db.collection(locator.collection).find(locator.filter).toArray()
 }
 
 export async function executeTransactionInMongo(
-    db: MongoClient,
+    client: MongoClient,
+    db: Db,
     toUpdate: FieldsToUpdate<MongoLocator>[],
     nodesToDelete: Locator[]
 ) {
-    const session = db.startSession();
+    const session = client.startSession();
     try {
         await session.withTransaction(async () => {
             let promises = [];
             // delete nodes
             for (const nodeLocator of nodesToDelete) {
                 const locator = nodeLocator as MongoLocator;
-                promises.push(db.db().collection(locator.collection).deleteOne(locator.filter, { session }));
+                promises.push(db.collection(locator.collection).deleteOne(locator.filter, { session }));
             }
 
             // update nodes
             for (const { locator, fieldsToUpdate } of toUpdate) {
-                promises.push(db.db().collection(locator.collection).updateOne(locator.filter, fieldsToUpdate, { session }));
+                promises.push(db.collection(locator.collection).updateOne(locator.filter, fieldsToUpdate, { session }));
             }
 
             await Promise.all(promises);
@@ -35,6 +36,6 @@ export async function executeTransactionInMongo(
         throw "Transaction aborted: " + err;
     } finally {
         await session.endSession();
-        await db.close();
+        await client.close();
     }
 }

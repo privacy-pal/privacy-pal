@@ -63,7 +63,7 @@ async function testMongo(deletion: boolean) {
 
     console.log("Starting to test privacy pal")
 
-    const privacyPalClient = new PrivacyPalClient<MongoLocator>(TestDatabase.mongoClient);
+    const privacyPalClient = new PrivacyPalClient<MongoLocator>(TestDatabase.mongoClient, TestDatabase.mongoDb);
     const user1Locator: MongoLocator = {
         dataType: 'user',
         singleDocument: true,

@@ -22,7 +22,7 @@ export async function GetUser(ID: string): Promise<User | undefined> {
                 return user;
             }
         } else if (TestDatabase.database === "mongo") {
-            const doc = await TestDatabase.mongoClient.db().collection(FirestoreCollections.Users).findOne({ _id: new ObjectId(ID) });
+            const doc = await TestDatabase.mongoDb.collection(FirestoreCollections.Users).findOne({ _id: new ObjectId(ID) });
 
             if (!doc) {
                 throw new Error(doesNotExistError);
@@ -50,7 +50,7 @@ export async function CreateUser(name: string): Promise<User> {
             user.id = docRef.id;
             return user;
         } else if (TestDatabase.database === "mongo") {
-            const doc = await TestDatabase.mongoClient.db().collection(FirestoreCollections.Users).insertOne(Object.assign({}, user));
+            const doc = await TestDatabase.mongoDb.collection(FirestoreCollections.Users).insertOne(Object.assign({}, user));
             user.id = doc.insertedId.toString();
             return user;
         } else {

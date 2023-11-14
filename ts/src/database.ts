@@ -1,5 +1,5 @@
-import { Firestore, UpdateData } from "firebase-admin/firestore";
-import { MongoClient, UpdateFilter } from "mongodb";
+import { Firestore } from "firebase-admin/firestore";
+import { MongoClient, Db } from "mongodb";
 import { FieldsToUpdate, FirestoreLocator, Locator, MongoLocator } from "./model";
 import { executeTransactionInFirestore, getDocumentFromFirestore, getDocumentsFromFirestore } from "./firestore";
 import { executeTransactionInMongo, getDocumentFromMongo, getDocumentsFromMongo } from "./mongodb";
@@ -7,15 +7,17 @@ import { executeTransactionInMongo, getDocumentFromMongo, getDocumentsFromMongo 
 class Database {
     type: "firestore" | "mongo";
     client: Firestore | MongoClient;
+    mongoDb: Db;
 
-    constructor(client: Firestore | MongoClient) {
+    constructor(client: Firestore | MongoClient, mongoDb?: Db) {
         // check type matches
         if (client instanceof Firestore) {
             this.type = "firestore";
-        } else if (client instanceof MongoClient) {
+        } else if (client instanceof MongoClient && mongoDb) {
             this.type = "mongo";
+            this.mongoDb = mongoDb;
         } else {
-            throw new Error("Client must be either a Firestore or MongoClient");
+            throw new Error("The client argument must be either a Firestore or MongoClient. If client is MongoClient, mongoDb must be provided.");
         }
         this.client = client;
     }
@@ -25,7 +27,7 @@ class Database {
             case "firestore":
                 return getDocumentFromFirestore(this.client as Firestore, locator as FirestoreLocator);
             case "mongo":
-                return getDocumentFromMongo(this.client as MongoClient, locator as MongoLocator);
+                return getDocumentFromMongo(this.mongoDb, locator as MongoLocator);
         }
     }
 
@@ -34,7 +36,7 @@ class Database {
             case "firestore":
                 return getDocumentsFromFirestore(this.client as Firestore, locator as FirestoreLocator);
             case "mongo":
-                return getDocumentsFromMongo(this.client as MongoClient, locator as MongoLocator);
+                return getDocumentsFromMongo(this.mongoDb, locator as MongoLocator);
         }
     }
 
@@ -43,7 +45,7 @@ class Database {
             case "firestore":
                 return executeTransactionInFirestore(this.client as Firestore, fieldsToUpdate as FieldsToUpdate<FirestoreLocator>[], nodesToDelete as FirestoreLocator[])
             case "mongo":
-                return executeTransactionInMongo(this.client as MongoClient, fieldsToUpdate as FieldsToUpdate<MongoLocator>[], nodesToDelete as MongoLocator[])
+                return executeTransactionInMongo(this.client as MongoClient, this.mongoDb, fieldsToUpdate as FieldsToUpdate<MongoLocator>[], nodesToDelete as MongoLocator[])
 
         }
     }
