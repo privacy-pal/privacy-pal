@@ -1,10 +1,13 @@
 {
   "name": "privacy-pal",
-  "version": "1.1.5",
+  "version": "1.2.0",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
   "scripts": {
-    "build": "tsc"
+    "build": "tsc && chmod +x ./dist/src/genpal.js"
+  },
+  "bin": {
+    "genpal": "./dist/src/genpal.js"
   },
   "repository": {
     "type": "git",
@@ -26,6 +29,7 @@
   "description": "Privacy Pal is a tool that helps applications handle data access and deletion requests in compliance with privacy regulations like GDPR and CCPA.",
   "dependencies": {
     "@firebase/firestore": "^4.3.0",
+    "commander": "^11.1.0",
     "dotenv": "^16.3.1",
     "firebase-admin": "^11.11.0",
     "mongodb": "^6.2.0"
