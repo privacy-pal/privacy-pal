@@ -1,5 +1,5 @@
 import { CollectionReference, FieldPath, Firestore, Query, UpdateData, WhereFilterOp } from "firebase-admin/firestore";
-import { FieldsToUpdate, FirestoreLocator } from "./model";
+import { DocumentUpdates, FirestoreLocator } from "./model";
 
 export async function getDocumentFromFirestore(db: Firestore, locator: FirestoreLocator): Promise<any> {
     let docRef = db.collection(locator.collectionPath[0]).doc(locator.docIds[0]);
@@ -55,7 +55,7 @@ export async function getDocumentsFromFirestore(db: Firestore, locator: Firestor
 
 export async function executeTransactionInFirestore(
     db: Firestore,
-    toUpdate: FieldsToUpdate<FirestoreLocator>[],
+    toUpdate: DocumentUpdates<FirestoreLocator>[],
     nodesToDelete: FirestoreLocator[]
 ) {
     try {

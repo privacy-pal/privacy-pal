@@ -1,5 +1,5 @@
 import { MongoClient, Db } from "mongodb";
-import { FieldsToUpdate, Locator, MongoLocator } from "./model";
+import { DocumentUpdates, Locator, MongoLocator } from "./model";
 
 export async function getDocumentFromMongo(db: Db, locator: MongoLocator): Promise<any> {
     return db.collection(locator.collection).findOne(locator.filter)
@@ -12,7 +12,7 @@ export async function getDocumentsFromMongo(db: Db, locator: MongoLocator): Prom
 export async function executeTransactionInMongo(
     client: MongoClient,
     db: Db,
-    toUpdate: FieldsToUpdate<MongoLocator>[],
+    toUpdate: DocumentUpdates<MongoLocator>[],
     nodesToDelete: Locator[]
 ) {
     const session = client.startSession();

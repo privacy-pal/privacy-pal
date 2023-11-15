@@ -85,11 +85,7 @@ async function testMongo(deletion: boolean) {
                 _id: new ObjectId(user2.id)
             }
         }
-        await privacyPalClient.processDeletionRequest(handleDeletionMongo, user2Locator, user2.id, false)
-
-        console.log("finished deletion")
-        // const res = await privacyPalClient.processAccessRequest(handleAccessMongo, dataSubjectLocator, user1.id)
-        // console.log(JSON.stringify(res))
+        return await privacyPalClient.processDeletionRequest(handleDeletionMongo, user2Locator, user2.id, false)
     }
 }
 
@@ -160,6 +156,9 @@ async function testFirestore(deletion: boolean = false) {
 }
 
 const DELETION = true
-testMongo(DELETION).then(() => TestDatabase.cleanupDB())
+testMongo(DELETION).then((res) => {
+    console.log(res)
+    TestDatabase.cleanupDB()
+})
 // testFirestore().then(() => TestDatabase.cleanupDB())
 

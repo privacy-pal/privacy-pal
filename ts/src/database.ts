@@ -1,6 +1,6 @@
 import { Firestore } from "firebase-admin/firestore";
 import { MongoClient, Db } from "mongodb";
-import { FieldsToUpdate, FirestoreLocator, Locator, MongoLocator } from "./model";
+import { DocumentUpdates, FirestoreLocator, Locator, MongoLocator } from "./model";
 import { executeTransactionInFirestore, getDocumentFromFirestore, getDocumentsFromFirestore } from "./firestore";
 import { executeTransactionInMongo, getDocumentFromMongo, getDocumentsFromMongo } from "./mongodb";
 
@@ -40,12 +40,12 @@ class Database {
         }
     }
 
-    async updateAndDelete(fieldsToUpdate: FieldsToUpdate<MongoLocator | FirestoreLocator>[], nodesToDelete: Locator[]): Promise<void> {
+    async updateAndDelete(fieldsToUpdate: DocumentUpdates<MongoLocator | FirestoreLocator>[], nodesToDelete: Locator[]): Promise<void> {
         switch (this.type) {
             case "firestore":
-                return executeTransactionInFirestore(this.client as Firestore, fieldsToUpdate as FieldsToUpdate<FirestoreLocator>[], nodesToDelete as FirestoreLocator[])
+                return executeTransactionInFirestore(this.client as Firestore, fieldsToUpdate as DocumentUpdates<FirestoreLocator>[], nodesToDelete as FirestoreLocator[])
             case "mongo":
-                return executeTransactionInMongo(this.client as MongoClient, this.mongoDb, fieldsToUpdate as FieldsToUpdate<MongoLocator>[], nodesToDelete as MongoLocator[])
+                return executeTransactionInMongo(this.client as MongoClient, this.mongoDb, fieldsToUpdate as DocumentUpdates<MongoLocator>[], nodesToDelete as MongoLocator[])
 
         }
     }

@@ -25,7 +25,7 @@ export interface FirestoreLocator extends LocatorBase {
 }
 
 // internal 
-export interface FieldsToUpdate<T extends FirestoreLocator | MongoLocator> {
+export interface DocumentUpdates<T extends FirestoreLocator | MongoLocator> {
     locator: T;
     fieldsToUpdate: T extends MongoLocator ? UpdateFilter<any> : UpdateData<any>;
 }

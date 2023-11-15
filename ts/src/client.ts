@@ -2,7 +2,7 @@
 import { Firestore } from 'firebase-admin/firestore';
 import { MongoClient, Db } from 'mongodb';
 import Database from './database';
-import { FieldsToUpdate, FirestoreLocator, HandleAccessFunc, HandleDeletionFunc, MongoLocator, isLocator, validateLocator } from './model';
+import { DocumentUpdates, FirestoreLocator, HandleAccessFunc, HandleDeletionFunc, MongoLocator, isLocator, validateLocator } from './model';
 
 class PrivacyPalClient<T extends FirestoreLocator | MongoLocator>{
 
@@ -86,18 +86,24 @@ class PrivacyPalClient<T extends FirestoreLocator | MongoLocator>{
         }
     }
 
-    async processDeletionRequest(handleDeletion: HandleDeletionFunc<T>, dataSubjectLocator: T, dataSubjectId: string, test: boolean) {
-        const { fieldsToUpdate, nodesToDelete } = await this.processDeletionRequestHelper(handleDeletion, dataSubjectId, dataSubjectLocator);
-        if (!test) {
-            await this.db.updateAndDelete(fieldsToUpdate, nodesToDelete);
+    async processDeletionRequest(
+        handleDeletion: HandleDeletionFunc<T>,
+        dataSubjectLocator: T,
+        dataSubjectId: string,
+        writeToDatabase: boolean
+    ): Promise<string> {
+        const { documentsToUpdate, nodesToDelete } = await this.processDeletionRequestHelper(handleDeletion, dataSubjectId, dataSubjectLocator);
+        if (writeToDatabase) {
+            await this.db.updateAndDelete(documentsToUpdate, nodesToDelete);
         }
+        return JSON.stringify({ writeToDatabase: writeToDatabase, documentsToUpdate, nodesToDelete });
     }
 
     private async processDeletionRequestHelper(
         handleDeletion: HandleDeletionFunc<T>,
         dataSubjectID: string,
         locator: T,
-    ): Promise<{ fieldsToUpdate: FieldsToUpdate<T>[], nodesToDelete: T[] }> {
+    ): Promise<{ documentsToUpdate: DocumentUpdates<T>[], nodesToDelete: T[] }> {
         let dataNodes: any[] = [];
         if (locator.singleDocument) {
             const node = await this.db.getDocument(locator);
@@ -106,7 +112,7 @@ class PrivacyPalClient<T extends FirestoreLocator | MongoLocator>{
             const nodes = await this.db.getDocuments(locator);
             dataNodes = dataNodes.concat(nodes);
         }
-        let allFieldsToUpdate: FieldsToUpdate<T>[] = [];
+        let allDocumentsToUpdate: DocumentUpdates<T>[] = [];
         let allNodesToDelete: T[] = [];
 
         for (const currentDataNode of dataNodes) {
@@ -114,8 +120,8 @@ class PrivacyPalClient<T extends FirestoreLocator | MongoLocator>{
             // 1. first recursively process nested nodes
             if (nodesToTraverse.length > 0) {
                 for (const nodeLocator of nodesToTraverse) {
-                    const { fieldsToUpdate, nodesToDelete } = await this.processDeletionRequestHelper(handleDeletion, dataSubjectID, nodeLocator);
-                    allFieldsToUpdate = allFieldsToUpdate.concat(fieldsToUpdate);
+                    const { documentsToUpdate: fieldsToUpdate, nodesToDelete } = await this.processDeletionRequestHelper(handleDeletion, dataSubjectID, nodeLocator);
+                    allDocumentsToUpdate = allDocumentsToUpdate.concat(fieldsToUpdate);
                     allNodesToDelete = allNodesToDelete.concat(nodesToDelete);
                 }
             }
@@ -124,11 +130,11 @@ class PrivacyPalClient<T extends FirestoreLocator | MongoLocator>{
             if (deleteNode) {
                 allNodesToDelete.push(locator);
             } else if (fieldsToUpdate) {
-                allFieldsToUpdate.push({ locator: locator as T, fieldsToUpdate: fieldsToUpdate });
+                allDocumentsToUpdate.push({ locator: locator as T, fieldsToUpdate: fieldsToUpdate });
             }
         }
 
-        return { fieldsToUpdate: allFieldsToUpdate, nodesToDelete: allNodesToDelete };
+        return { documentsToUpdate: allDocumentsToUpdate, nodesToDelete: allNodesToDelete };
     }
 
 }
