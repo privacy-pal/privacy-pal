@@ -34,7 +34,7 @@ ${funcs}
 `;
 
   format(code, { parser: 'typescript' })
-  .then((formattedCode) => writeFileSync('./generated.ts', formattedCode))
+  .then((formattedCode) => writeFileSync(opt.output, formattedCode))
   .catch((err) => console.error(err));
 
 }
