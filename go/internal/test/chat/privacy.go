@@ -3,7 +3,7 @@ package chat
 import (
 	"log"
 
-	pal "github.com/privacy-pal/privacy-pal/pkg"
+	pal "github.com/privacy-pal/privacy-pal/go/pkg"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )

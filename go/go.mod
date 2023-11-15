@@ -1,4 +1,4 @@
-module github.com/privacy-pal/privacy-pal
+module github.com/privacy-pal/privacy-pal/go
 
 go 1.19
 

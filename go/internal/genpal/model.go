@@ -1,6 +1,6 @@
 package genpal
 
-import pal "github.com/privacy-pal/privacy-pal/pkg"
+import pal "github.com/privacy-pal/privacy-pal/go/pkg"
 
 type Mode string
 

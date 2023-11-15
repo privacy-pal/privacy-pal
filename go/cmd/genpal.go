@@ -1,4 +1,4 @@
-package main // "github.com/privacy-pal/privacy-pal/cmd/genpal"
+package main // "github.com/privacy-pal/privacy-pal/go/cmd/genpal"
 
 import (
 	"bytes"
@@ -11,7 +11,7 @@ import (
 	"os"
 	"strings"
 
-	genpal "github.com/privacy-pal/privacy-pal/internal/genpal"
+	genpal "github.com/privacy-pal/privacy-pal/go/internal/genpal"
 	"golang.org/x/tools/go/packages"
 	yaml "gopkg.in/yaml.v2"
 )
@@ -91,7 +91,7 @@ func main() {
 	g.Printf("\n")
 	g.Printf("package %s", g.pkg.name)
 	g.Printf("\n")
-	g.Printf("import (\npal \"github.com/privacy-pal/privacy-pal/pkg\"\n)\n\n")
+	g.Printf("import (\npal \"github.com/privacy-pal/privacy-pal/go/pkg\"\n)\n\n")
 
 	if genpalMode == genpal.ModeTypenames {
 		types := strings.Split(*input, ",")

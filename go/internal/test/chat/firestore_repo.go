@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"cloud.google.com/go/firestore"
-	"github.com/privacy-pal/privacy-pal/internal/test"
+	"github.com/privacy-pal/privacy-pal/go/internal/test"
 )
 
 func (u *User) CreateGroupChatFirestore() (chat *GroupChat, err error) {

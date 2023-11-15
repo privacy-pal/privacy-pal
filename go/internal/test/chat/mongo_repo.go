@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/privacy-pal/privacy-pal/internal/test"
+	"github.com/privacy-pal/privacy-pal/go/internal/test"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"

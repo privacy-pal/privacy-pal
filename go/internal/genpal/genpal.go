@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	pal "github.com/privacy-pal/privacy-pal/pkg"
+	pal "github.com/privacy-pal/privacy-pal/go/pkg"
 )
 
 var dataNodeProperties map[string]DataNodeProperty

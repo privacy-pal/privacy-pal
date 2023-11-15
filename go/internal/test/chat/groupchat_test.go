@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/privacy-pal/privacy-pal/internal/test"
-	pal "github.com/privacy-pal/privacy-pal/pkg"
+	"github.com/privacy-pal/privacy-pal/go/internal/test"
+	pal "github.com/privacy-pal/privacy-pal/go/pkg"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )

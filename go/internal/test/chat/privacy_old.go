@@ -2,7 +2,7 @@ package chat
 
 import (
 	"github.com/mitchellh/mapstructure"
-	pal "github.com/privacy-pal/privacy-pal/pkg"
+	pal "github.com/privacy-pal/privacy-pal/go/pkg"
 )
 
 func HandleAccessOld(dataSubjectId string, currentDbObjLocator pal.Locator, obj pal.DatabaseObject) map[string]interface{} {
