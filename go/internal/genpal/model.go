@@ -17,8 +17,8 @@ type DataNodeProperty struct {
 }
 
 type IndirectField struct {
-	Type         string       `yaml:"type"`
-	FieldName    string       `yaml:"field_name,omitempty"`
-	ExportedName string       `yaml:"exported_name"`
-	Queries      *[]pal.Query `yaml:"queries,omitempty"`
+	Type         string        `yaml:"type"`
+	FieldName    string        `yaml:"field_name,omitempty"`
+	ExportedName string        `yaml:"exported_name"`
+	Queries      *[]pal.Filter `yaml:"queries,omitempty"`
 }

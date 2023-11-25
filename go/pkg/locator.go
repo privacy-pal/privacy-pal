@@ -27,11 +27,11 @@ type FirestoreLocator struct {
 	CollectionPath []string
 	// List of document IDs in the order of collections
 	DocIDs []string
-	// List of queries to be applied to a collection. Ignored if type is document.
-	Queries []Query
+	// List of filters to be applied to a collection. Ignored if type is document.
+	Filters []Filter
 }
 
-type Query struct {
+type Filter struct {
 	Path  string
 	Op    string
 	Value interface{}

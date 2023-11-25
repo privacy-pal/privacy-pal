@@ -63,7 +63,7 @@ func (g *GroupChat) HandleAccess(dataSubjectId string, currentDbObjLocator pal.L
 		FirestoreLocator: pal.FirestoreLocator{
 			CollectionPath: append(currentDbObjLocator.FirestoreLocator.CollectionPath, "messages"),
 			DocIDs:         currentDbObjLocator.DocIDs,
-			Queries: []pal.Query{
+			Filters: []pal.Filter{
 				{
 					Path:  "userId",
 					Op:    "==",
