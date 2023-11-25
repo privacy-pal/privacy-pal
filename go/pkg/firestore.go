@@ -65,28 +65,5 @@ func (c *firestoreClient) getDocuments(loc Locator) ([]DatabaseObject, error) {
 	return dataNodes, nil
 }
 
-// func (pal *Client) addDeletionOperationToBatch(batch *firestore.WriteBatch, loc Locator) {
-// 	docRef := pal.dbClient.Collection(loc.CollectionPath[0]).Doc(loc.DocIDs[0])
-
-// 	for i := 1; i < len(loc.CollectionPath); i++ {
-// 		docRef = docRef.Collection(loc.CollectionPath[i]).Doc(loc.DocIDs[i])
-// 	}
-// 	batch.Delete(docRef)
-// }
-
-// func (pal *Client) addUpdateOperationToBatch(batch *firestore.WriteBatch, loc Locator, fieldsToUpdate []firestore.Update) {
-// 	docRef := pal.dbClient.Collection(loc.CollectionPath[0]).Doc(loc.DocIDs[0])
-
-// 	for i := 1; i < len(loc.CollectionPath); i++ {
-// 		docRef = docRef.Collection(loc.CollectionPath[i]).Doc(loc.DocIDs[i])
-// 	}
-// 	batch.Update(docRef, fieldsToUpdate)
-// }
-
-// func (pal *Client) commitBatch(batch *firestore.WriteBatch) error {
-// 	_, err := batch.Commit(context.Background())
-// 	if err != nil {
-// 		return fmt.Errorf("%s %w", WRITE_BATCH_ERROR, err)
-// 	}
-// 	return nil
-// }
+func (c *firestoreClient) updateAndDelete(documentsToUpdate []DocumentUpdates, nodesToDelete []Locator) {
+}

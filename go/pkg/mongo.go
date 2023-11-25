@@ -85,3 +85,6 @@ func (c *mongoClient) getDocuments(loc Locator) ([]DatabaseObject, error) {
 
 	return results, nil
 }
+
+func (c *mongoClient) updateAndDelete(documentsToUpdate []DocumentUpdates, nodesToDelete []Locator) {
+}
