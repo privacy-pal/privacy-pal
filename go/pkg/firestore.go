@@ -43,10 +43,10 @@ func (c *firestoreClient) getDocuments(loc Locator) ([]DatabaseObject, error) {
 	}
 
 	var query firestore.Query = docRef.Query
-	if len(loc.Queries) > 0 {
-		query = docRef.Where(loc.Queries[0].Path, loc.Queries[0].Op, loc.Queries[0].Value)
-		for i := 1; i < len(loc.Queries); i++ {
-			query = query.Where(loc.Queries[i].Path, loc.Queries[i].Op, loc.Queries[i].Value)
+	if len(loc.Filters) > 0 {
+		query = docRef.Where(loc.Filters[0].Path, loc.Filters[0].Op, loc.Filters[0].Value)
+		for i := 1; i < len(loc.Filters); i++ {
+			query = query.Where(loc.Filters[i].Path, loc.Filters[i].Op, loc.Filters[i].Value)
 		}
 	}
 
