@@ -101,7 +101,7 @@ func HandleAccessGroupChat(dataSubjectId string, currentDbObjLocator pal.Locator
 		FirestoreLocator: pal.FirestoreLocator{
 			CollectionPath: append(currentDbObjLocator.FirestoreLocator.CollectionPath, "messages"),
 			DocIDs:         currentDbObjLocator.DocIDs,
-			Queries: []pal.Query{
+			Filters: []pal.Filter{
 				{
 					Path:  "userId",
 					Op:    "==",
@@ -159,7 +159,7 @@ func HandleAccessDirectMessage(dataSubjectId string, currentDbObjLocator pal.Loc
 		FirestoreLocator: pal.FirestoreLocator{
 			CollectionPath: append(currentDbObjLocator.FirestoreLocator.CollectionPath, "messages"),
 			DocIDs:         currentDbObjLocator.DocIDs,
-			Queries: []pal.Query{
+			Filters: []pal.Filter{
 				{
 					Path:  "userId",
 					Op:    "==",
