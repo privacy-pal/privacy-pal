@@ -83,7 +83,7 @@ func main() {
 	g.Printf("import (\npal \"github.com/privacy-pal/privacy-pal/go/pkg\"\n)\n\n")
 
 	inputs := strings.Split(*input, ",")
-	g.Printf(genpal.GenerateWithTypenameMode(inputs))
+	g.Printf(genpal.GenerateStubs(inputs))
 
 	// Format the output.
 	src := g.format()

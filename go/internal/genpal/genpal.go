@@ -3,15 +3,19 @@ package genpal
 import (
 	"fmt"
 	"strings"
+
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
-var dataNodeProperties map[string]DataNodeProperty
+const (
+	ExportedHandleAccessFuncName = "HandleAccess"
+	InternalHandleAccessFuncName = "handleAccess"
+)
 
-func init() {
-	dataNodeProperties = make(map[string]DataNodeProperty)
-}
+func GenerateStubs(typenames []string) (ret string) {
+	ret += generateHandleAccess(typenames)
 
-func GenerateWithTypenameMode(typenames []string) (ret string) {
 	for _, typename := range typenames {
 		ret += generateHandleAccessForType(typename)
 	}
@@ -27,11 +31,11 @@ func generateHandleAccess(typenames []string) (ret string) {
 	ret += ")\n\n"
 
 	// generate handle access function
-	ret += "func HandleAccess(dataSubjectId string, currentDbObjLocator pal.Locator, dbObj pal.DatabaseObject) map[string]interface{} {\n"
+	ret += "func " + ExportedHandleAccessFuncName + "(dataSubjectId string, currentDbObjLocator pal.Locator, dbObj pal.DatabaseObject) map[string]interface{} {\n"
 	ret += "switch currentDbObjLocator.DataType {\n"
 	for _, typename := range typenames {
 		ret += fmt.Sprintf("case %sDataType:\n", toCamelCase(typename))
-		ret += fmt.Sprintf("return HandleAccess%s(dataSubjectId, currentDbObjLocator, dbObj)\n", toCamelCase(typename))
+		ret += fmt.Sprintf("return %s%s(dataSubjectId, currentDbObjLocator, dbObj)\n", InternalHandleAccessFuncName, toCamelCase(typename))
 	}
 	ret += "default:\n"
 	ret += "return nil\n"
@@ -42,18 +46,18 @@ func generateHandleAccess(typenames []string) (ret string) {
 }
 
 func generateHandleAccessForType(typename string) (ret string) {
-	ret += "func HandleAccess" + toCamelCase(typename) + "(dataSubjectId string, currentDbObjLocator pal.Locator, dbObj pal.DatabaseObject) map[string]interface{} {\n"
+	ret += "func " + InternalHandleAccessFuncName + toCamelCase(typename) + "(dataSubjectId string, currentDbObjLocator pal.Locator, dbObj pal.DatabaseObject) map[string]interface{} {\n"
 	// only generate function headers
 	ret += "return nil\n"
 	ret += "}\n\n"
 	return
 }
 
-// example input: group_chat; output: GroupChat
+// example: 'group_chat' yields 'GroupChat'
 func toCamelCase(s string) string {
 	lst := strings.Split(s, "_")
 	for i, s := range lst {
-		lst[i] = strings.Title(s)
+		lst[i] = cases.Title(language.English).String(s)
 	}
 	return strings.Join(lst, "")
 }
