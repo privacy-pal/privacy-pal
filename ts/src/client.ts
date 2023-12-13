@@ -92,11 +92,17 @@ class PrivacyPalClient<T extends FirestoreLocator | MongoLocator>{
         dataSubjectId: string,
         writeToDatabase: boolean
     ): Promise<string> {
+        console.log("Processing deletion request for data subject " + dataSubjectId);
+
         const { documentsToUpdate, nodesToDelete } = await this.processDeletionRequestHelper(handleDeletion, dataSubjectId, dataSubjectLocator);
         if (writeToDatabase) {
-            await this.db.updateAndDelete(documentsToUpdate, nodesToDelete);
+            try {
+                await this.db.updateAndDelete(documentsToUpdate, nodesToDelete);
+            } catch (err) {
+                return "Failed to write to database: " + err;
+            }
         }
-        return JSON.stringify({ writeToDatabase: writeToDatabase, documentsToUpdate, nodesToDelete });
+        return JSON.stringify({ writeToDatabase, documentsToUpdate, nodesToDelete });
     }
 
     private async processDeletionRequestHelper(
