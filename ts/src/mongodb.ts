@@ -16,26 +16,19 @@ export async function executeTransactionInMongo(
     nodesToDelete: Locator[]
 ) {
     const session = client.startSession();
-    try {
-        await session.withTransaction(async () => {
-            let promises = [];
-            // delete nodes
-            for (const nodeLocator of nodesToDelete) {
-                const locator = nodeLocator as MongoLocator;
-                promises.push(db.collection(locator.collection).deleteOne(locator.filter, { session }));
-            }
+    return session.withTransaction(async () => {
+        let promises = [];
+        // delete nodes
+        for (const nodeLocator of nodesToDelete) {
+            const locator = nodeLocator as MongoLocator;
+            promises.push(db.collection(locator.collection).deleteOne(locator.filter, { session }));
+        }
 
-            // update nodes
-            for (const { locator, fieldsToUpdate } of toUpdate) {
-                promises.push(db.collection(locator.collection).updateOne(locator.filter, fieldsToUpdate, { session }));
-            }
+        // update nodes
+        for (const { locator, fieldsToUpdate } of toUpdate) {
+            promises.push(db.collection(locator.collection).updateOne(locator.filter, fieldsToUpdate, { session }));
+        }
 
-            await Promise.all(promises);
-        });
-    } catch (err) {
-        throw "Transaction aborted: " + err;
-    } finally {
-        await session.endSession();
-        await client.close();
-    }
+        await Promise.all(promises);
+    }).finally(() => session.endSession());
 }
