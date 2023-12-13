@@ -1,81 +1,84 @@
 package pal
 
 import (
+	"encoding/json"
+
 	"cloud.google.com/go/firestore"
 )
 
-type DeletionResult struct {
-	NumDocumentsDeleted int
-	NumDocumentsUpdated int
+type documentUpdates struct {
+	Locator        Locator
+	FieldsToUpdate FieldUpdates
 }
 
-func (pal *Client) ProcessDeletionRequest(handleDelection HandleDeletionFunc, dataSubjectLocator Locator, dataSubjectID string) (DeletionResult, error) {
-	// fmt.Printf("Processing deletion request for data subject %s\n", dataSubjectID)
-	// // TODO: check data subject is valid
-	// batch := pal.dbClient.Batch()
+type FieldUpdates struct {
+	FirestoreUpdates []firestore.Update
+	MongoUpdates     []interface{}
+}
 
-	// delResult := DeletionResult{}
-	// err := pal.processDeletionRequest(handleDelection, dataSubjectLocator, dataSubjectID, batch, &delResult)
-	// if err != nil {
-	// 	return DeletionResult{}, fmt.Errorf("%s %w", DELETION_REQUEST_ERROR, err)
-	// }
+func (pal *Client) ProcessDeletionRequest(handleDeletion HandleDeletionFunc, dataSubjectLocator Locator, dataSubjectID string, writeToDatabase bool) (string, error) {
+	documentsToUpdate, nodesToDelete, err := pal.processDeletionRequest(handleDeletion, dataSubjectLocator, dataSubjectID)
+	if err != nil {
+		return "", err
+	}
+	if writeToDatabase {
+		pal.dbClient.updateAndDelete(documentsToUpdate, nodesToDelete)
+	}
 
-	// err = pal.commitBatch(batch)
-	// if err != nil {
-	// 	return DeletionResult{}, fmt.Errorf("%s %w", DELETION_REQUEST_ERROR, err)
-	// }
-
-	// fmt.Printf("Deleted %d documents\n", delResult.NumDocumentsDeleted)
-	// fmt.Printf("Updated %d documents\n", delResult.NumDocumentsUpdated)
-
-	// return delResult, nil
-	return DeletionResult{}, nil
+	result, err := json.Marshal(map[string]interface{}{
+		"writeToDatabase":   writeToDatabase,
+		"nodesToDelete":     nodesToDelete,
+		"documentsToUpdate": documentsToUpdate,
+	})
+	if err != nil {
+		return "", err
+	}
+	return string(result), nil
 }
 
 func (pal *Client) processDeletionRequest(
-	handleDelection HandleDeletionFunc,
+	handleDeletion HandleDeletionFunc,
 	locator Locator,
 	dataSubjectID string,
-	batch *firestore.WriteBatch,
-	delResult *DeletionResult,
-) error {
+) (documentsToUpdate []documentUpdates, nodesToDelete []Locator, err error) {
+	dataNodes := make([]DatabaseObject, 0)
+	if locator.LocatorType == Document {
+		node, err := pal.dbClient.getDocument(locator)
+		if err != nil {
+			return nil, nil, err
+		}
+		dataNodes = append(dataNodes, node)
+	} else {
+		nodes, err := pal.dbClient.getDocuments(locator)
+		if err != nil {
+			return nil, nil, err
+		}
+		dataNodes = append(dataNodes, nodes...)
+	}
 
-	// dataNode, err := pal.dbClient.getDocument(locator)
-	// if err != nil {
-	// 	return err
-	// }
-	// nodesToTraverse, deleteNode, fieldsToUpdate := handleDelection(dataSubjectID, dataNode)
+	allDocumentsToUpdate := make([]documentUpdates, 0)
+	allNodesToDelete := make([]Locator, 0)
+	for _, currentDataNode := range dataNodes {
+		nodesToTraverse, deleteNode, fieldsToUpdate := handleDeletion(dataSubjectID, locator, currentDataNode)
+		// 1. first recursively process nested nodes
+		if len(nodesToTraverse) > 0 {
+			for _, nodeLocator := range nodesToTraverse {
+				documentsToUpdate, nodesToDelete, err := pal.processDeletionRequest(handleDeletion, nodeLocator, dataSubjectID)
+				if err != nil {
+					return nil, nil, err
+				}
+				allDocumentsToUpdate = append(allDocumentsToUpdate, documentsToUpdate...)
+				allNodesToDelete = append(allNodesToDelete, nodesToDelete...)
+			}
+		}
 
-	// // 1. first recursively process nested nodes
-	// if len(nodesToTraverse) > 0 {
-	// 	for _, loc := range nodesToTraverse {
-	// 		pal.processDeletionRequest(handleDelection, loc, dataSubjectID, batch, delResult)
-	// 	}
-	// }
+		// 2. delete current node if needed
+		if deleteNode {
+			allNodesToDelete = append(allNodesToDelete, locator)
+		} else {
+			allDocumentsToUpdate = append(allDocumentsToUpdate, documentUpdates{Locator: locator, FieldsToUpdate: fieldsToUpdate})
+		}
+	}
 
-	// // 2. delete current node if needed
-	// if deleteNode {
-	// 	pal.addDeletionOperationToBatch(
-	// 		batch,
-	// 		Locator{
-	// 			CollectionPath: locator.CollectionPath,
-	// 			DocIDs:         locator.DocIDs,
-	// 		},
-	// 	)
-	// 	delResult.NumDocumentsDeleted++
-
-	// } else if len(fieldsToUpdate) > 0 {
-	// 	// 3. override fields if only nested data needs to be deleted
-	// 	pal.addUpdateOperationToBatch(
-	// 		batch,
-	// 		Locator{
-	// 			CollectionPath: locator.CollectionPath,
-	// 			DocIDs:         locator.DocIDs,
-	// 		},
-	// 		fieldsToUpdate,
-	// 	)
-	// 	delResult.NumDocumentsUpdated++
-	// }
-
-	return nil
+	return allDocumentsToUpdate, allNodesToDelete, nil
 }

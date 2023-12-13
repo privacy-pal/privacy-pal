@@ -3,6 +3,7 @@ package pal
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"cloud.google.com/go/firestore"
 )
@@ -65,28 +66,40 @@ func (c *firestoreClient) getDocuments(loc Locator) ([]DatabaseObject, error) {
 	return dataNodes, nil
 }
 
-// func (pal *Client) addDeletionOperationToBatch(batch *firestore.WriteBatch, loc Locator) {
-// 	docRef := pal.dbClient.Collection(loc.CollectionPath[0]).Doc(loc.DocIDs[0])
+func (c *firestoreClient) updateAndDelete(documentsToUpdate []documentUpdates, nodesToDelete []Locator) {
+	err := c.client.RunTransaction(context.Background(), func(ctx context.Context, t *firestore.Transaction) error {
+		// delete nodes
+		for _, nodeLocator := range nodesToDelete {
+			docRef := c.client.Collection(nodeLocator.FirestoreLocator.CollectionPath[0]).Doc(nodeLocator.DocIDs[0])
 
-// 	for i := 1; i < len(loc.CollectionPath); i++ {
-// 		docRef = docRef.Collection(loc.CollectionPath[i]).Doc(loc.DocIDs[i])
-// 	}
-// 	batch.Delete(docRef)
-// }
+			for i := 1; i < len(nodeLocator.FirestoreLocator.CollectionPath); i++ {
+				docRef = docRef.Collection(nodeLocator.FirestoreLocator.CollectionPath[i]).Doc(nodeLocator.DocIDs[i])
+			}
 
-// func (pal *Client) addUpdateOperationToBatch(batch *firestore.WriteBatch, loc Locator, fieldsToUpdate []firestore.Update) {
-// 	docRef := pal.dbClient.Collection(loc.CollectionPath[0]).Doc(loc.DocIDs[0])
+			err := t.Delete(docRef)
+			if err != nil {
+				return err
+			}
+		}
 
-// 	for i := 1; i < len(loc.CollectionPath); i++ {
-// 		docRef = docRef.Collection(loc.CollectionPath[i]).Doc(loc.DocIDs[i])
-// 	}
-// 	batch.Update(docRef, fieldsToUpdate)
-// }
+		// update nodes
+		for _, update := range documentsToUpdate {
+			docRef := c.client.Collection(update.Locator.FirestoreLocator.CollectionPath[0]).Doc(update.Locator.DocIDs[0])
 
-// func (pal *Client) commitBatch(batch *firestore.WriteBatch) error {
-// 	_, err := batch.Commit(context.Background())
-// 	if err != nil {
-// 		return fmt.Errorf("%s %w", WRITE_BATCH_ERROR, err)
-// 	}
-// 	return nil
-// }
+			for i := 1; i < len(update.Locator.FirestoreLocator.CollectionPath); i++ {
+				docRef = docRef.Collection(update.Locator.FirestoreLocator.CollectionPath[i]).Doc(update.Locator.DocIDs[i])
+			}
+
+			err := t.Update(docRef, update.FieldsToUpdate.FirestoreUpdates)
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		log.Printf("Error updating and deleting data: %v", err)
+	}
+}

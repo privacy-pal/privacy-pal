@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -84,4 +85,39 @@ func (c *mongoClient) getDocuments(loc Locator) ([]DatabaseObject, error) {
 	}
 
 	return results, nil
+}
+
+func (c *mongoClient) updateAndDelete(documentsToUpdate []documentUpdates, nodesToDelete []Locator) {
+	session, err := c.db.Client().StartSession()
+	if err != nil {
+		log.Fatalf("Failed to start session: %v", err)
+	}
+	defer session.EndSession(context.Background())
+
+	callback := func(sessionContext mongo.SessionContext) (interface{}, error) {
+		// delete nodes
+		for _, nodeLocator := range nodesToDelete {
+			collection := c.db.Collection(nodeLocator.MongoLocator.Collection)
+			_, err := collection.DeleteOne(sessionContext, nodeLocator.MongoLocator.Filter)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		// update nodes
+		for _, update := range documentsToUpdate {
+			collection := c.db.Collection(update.Locator.MongoLocator.Collection)
+			_, err := collection.UpdateOne(sessionContext, update.Locator.MongoLocator.Filter, update.FieldsToUpdate)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		return nil, nil
+	}
+
+	_, err = session.WithTransaction(context.Background(), callback)
+	if err != nil {
+		log.Fatalf("Transaction failed: %v", err)
+	}
 }
