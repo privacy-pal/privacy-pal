@@ -13,12 +13,10 @@ import (
 
 	genpal "github.com/privacy-pal/privacy-pal/go/internal/genpal"
 	"golang.org/x/tools/go/packages"
-	yaml "gopkg.in/yaml.v2"
 )
 
 var (
-	mode   = flag.String("mode", "", "typenames or yamlspec")
-	input  = flag.String("input", "", "if mode is typenames, comma-separated list of type names; if mode is yamlspec, path to yaml file")
+	input  = flag.String("input", "", "comma-separated list of type names")
 	output = flag.String("output", "", "output file name; default srcdir/<type>_privacy.go")
 )
 
@@ -30,29 +28,20 @@ func Usage() {
 	flag.PrintDefaults()
 }
 
-func validateArgs() (genpal.Mode, error) {
-	// Validate mode
-	switch *mode {
-	case string(genpal.ModeTypenames):
-		types := strings.Split(*input, ",")
-		if len(types) == 0 {
-			return "", fmt.Errorf("no typenames provided")
+func validateArgs() error {
+	*input = strings.ReplaceAll(*input, " ", "")
+	inputs := strings.Split(*input, ",")
+	// keep only non-empty strings
+	for i := 0; i < len(inputs); i++ {
+		if inputs[i] == "" {
+			inputs = append(inputs[:i], inputs[i+1:]...)
+			i--
 		}
-	case string(genpal.ModeYamlspec):
-		if *input == "" {
-			return "", fmt.Errorf("no yamlspec provided")
-		}
-		// check if file exists
-		_, err := os.Stat(*input)
-		if err != nil {
-			return "", fmt.Errorf("yamlspec file does not exist")
-		}
-	case "":
-		return "", fmt.Errorf("no mode provided")
-	default:
-		return "", fmt.Errorf("invalid mode")
 	}
-	return genpal.Mode(*mode), nil
+	if len(inputs) == 0 {
+		return fmt.Errorf("no typenames provided")
+	}
+	return nil
 }
 
 func main() {
@@ -61,7 +50,7 @@ func main() {
 	flag.Usage = Usage
 	flag.Parse()
 
-	genpalMode, err := validateArgs()
+	err := validateArgs()
 	if err != nil {
 		log.Printf("%s. See 'genpal -help'.", err)
 		os.Exit(2)
@@ -93,35 +82,8 @@ func main() {
 	g.Printf("\n")
 	g.Printf("import (\npal \"github.com/privacy-pal/privacy-pal/go/pkg\"\n)\n\n")
 
-	if genpalMode == genpal.ModeTypenames {
-		types := strings.Split(*input, ",")
-		g.Printf(genpal.GenerateWithTypenameMode(types))
-
-	} else if genpalMode == genpal.ModeYamlspec {
-		data, err := os.ReadFile(*input)
-		if err != nil {
-			log.Printf("error reading yamlspec file: %s\n", err)
-			os.Exit(2)
-		}
-		var dataNodes map[string]genpal.DataNodeProperty
-		err = yaml.Unmarshal(data, &dataNodes)
-		if err != nil {
-			log.Printf("error unmarshalling yamlspec file: %s\n", err)
-			os.Exit(2)
-		}
-
-		var mapSlice yaml.MapSlice
-		err = yaml.Unmarshal(data, &mapSlice)
-		if err != nil {
-			log.Printf("error unmarshalling yamlspec file: %s\n", err)
-			os.Exit(2)
-		}
-		typenames := make([]string, 0)
-		for _, item := range mapSlice {
-			typenames = append(typenames, item.Key.(string))
-		}
-		g.Printf(genpal.GenerateWithYamlspecMode(typenames, dataNodes))
-	}
+	inputs := strings.Split(*input, ",")
+	g.Printf(genpal.GenerateStubs(inputs))
 
 	// Format the output.
 	src := g.format()
