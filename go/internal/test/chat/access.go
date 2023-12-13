@@ -18,20 +18,20 @@ const (
 func HandleAccess(dataSubjectId string, currentDbObjLocator pal.Locator, dbObj pal.DatabaseObject) map[string]interface{} {
 	switch currentDbObjLocator.DataType {
 	case UserDataType:
-		return HandleAccessUser(dataSubjectId, currentDbObjLocator, dbObj)
+		return handleAccessUser(dataSubjectId, currentDbObjLocator, dbObj)
 	case GroupChatDataType:
-		return HandleAccessGroupChat(dataSubjectId, currentDbObjLocator, dbObj)
+		return handleAccessGroupChat(dataSubjectId, currentDbObjLocator, dbObj)
 	case MessageDataType:
-		return HandleAccessMessage(dataSubjectId, currentDbObjLocator, dbObj)
+		return handleAccessMessage(dataSubjectId, currentDbObjLocator, dbObj)
 	case DirectMessageDataType:
-		return HandleAccessDirectMessage(dataSubjectId, currentDbObjLocator, dbObj)
+		return handleAccessDirectMessage(dataSubjectId, currentDbObjLocator, dbObj)
 	default:
 		// TODO: should return error
 		return nil
 	}
 }
 
-func HandleAccessUser(dataSubjectId string, currentDbObjLocator pal.Locator, dbObj pal.DatabaseObject) map[string]interface{} {
+func handleAccessUser(dataSubjectId string, currentDbObjLocator pal.Locator, dbObj pal.DatabaseObject) map[string]interface{} {
 	data := make(map[string]interface{})
 
 	// TODO: include in documentation: you can access the id in 2 ways
@@ -92,7 +92,7 @@ func HandleAccessUser(dataSubjectId string, currentDbObjLocator pal.Locator, dbO
 	return data
 }
 
-func HandleAccessGroupChat(dataSubjectId string, currentDbObjLocator pal.Locator, dbObj pal.DatabaseObject) map[string]interface{} {
+func handleAccessGroupChat(dataSubjectId string, currentDbObjLocator pal.Locator, dbObj pal.DatabaseObject) map[string]interface{} {
 	data := make(map[string]interface{})
 
 	data["Messages"] = pal.Locator{
@@ -118,7 +118,7 @@ func HandleAccessGroupChat(dataSubjectId string, currentDbObjLocator pal.Locator
 	return data
 }
 
-func HandleAccessMessage(dataSubjectId string, currentDbObjLocator pal.Locator, dbObj pal.DatabaseObject) map[string]interface{} {
+func handleAccessMessage(dataSubjectId string, currentDbObjLocator pal.Locator, dbObj pal.DatabaseObject) map[string]interface{} {
 	data := make(map[string]interface{})
 
 	data["Content"] = dbObj["content"]
@@ -127,7 +127,7 @@ func HandleAccessMessage(dataSubjectId string, currentDbObjLocator pal.Locator, 
 	return data
 }
 
-func HandleAccessDirectMessage(dataSubjectId string, currentDbObjLocator pal.Locator, dbObj pal.DatabaseObject) map[string]interface{} {
+func handleAccessDirectMessage(dataSubjectId string, currentDbObjLocator pal.Locator, dbObj pal.DatabaseObject) map[string]interface{} {
 	data := make(map[string]interface{})
 
 	var otherUserId string

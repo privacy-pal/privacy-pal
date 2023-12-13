@@ -10,7 +10,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-func TestFirestore(t *testing.T) {
+func TestDeletionWithGroupChatFirestore(t *testing.T) {
 	test.InitFirestoreClient()
 
 	// create user 1
@@ -83,7 +83,7 @@ func TestFirestore(t *testing.T) {
 	}
 
 	palClient := pal.NewClientWithFirestore(test.FirestoreClient)
-	data, err := palClient.ProcessAccessRequest(HandleAccess, dataSubjectLocator, user1.ID)
+	data, err := palClient.ProcessDeletionRequest(HandleDeletion, dataSubjectLocator, user1.ID, false)
 	if err != nil {
 		panic(err)
 	}
@@ -95,7 +95,7 @@ func TestFirestore(t *testing.T) {
 	t.Log(string(json))
 }
 
-func TestMongo(t *testing.T) {
+func TestDeletionWithGroupChatMongo(t *testing.T) {
 	test.InitMongoClient()
 
 	// create user 1
@@ -177,7 +177,7 @@ func TestMongo(t *testing.T) {
 	}
 
 	palClient := pal.NewClientWithMongo(test.MongoDb)
-	data, err := palClient.ProcessAccessRequest(HandleAccess, dataSubjectLocator, user1.ID)
+	data, err := palClient.ProcessDeletionRequest(HandleDeletion, dataSubjectLocator, user1.ID, false)
 	if err != nil {
 		panic(err)
 	}

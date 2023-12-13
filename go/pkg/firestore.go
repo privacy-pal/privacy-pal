@@ -3,6 +3,7 @@ package pal
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"cloud.google.com/go/firestore"
 )
@@ -65,5 +66,40 @@ func (c *firestoreClient) getDocuments(loc Locator) ([]DatabaseObject, error) {
 	return dataNodes, nil
 }
 
-func (c *firestoreClient) updateAndDelete(documentsToUpdate []DocumentUpdates, nodesToDelete []Locator) {
+func (c *firestoreClient) updateAndDelete(documentsToUpdate []documentUpdates, nodesToDelete []Locator) {
+	err := c.client.RunTransaction(context.Background(), func(ctx context.Context, t *firestore.Transaction) error {
+		// delete nodes
+		for _, nodeLocator := range nodesToDelete {
+			docRef := c.client.Collection(nodeLocator.FirestoreLocator.CollectionPath[0]).Doc(nodeLocator.DocIDs[0])
+
+			for i := 1; i < len(nodeLocator.FirestoreLocator.CollectionPath); i++ {
+				docRef = docRef.Collection(nodeLocator.FirestoreLocator.CollectionPath[i]).Doc(nodeLocator.DocIDs[i])
+			}
+
+			err := t.Delete(docRef)
+			if err != nil {
+				return err
+			}
+		}
+
+		// update nodes
+		for _, update := range documentsToUpdate {
+			docRef := c.client.Collection(update.Locator.FirestoreLocator.CollectionPath[0]).Doc(update.Locator.DocIDs[0])
+
+			for i := 1; i < len(update.Locator.FirestoreLocator.CollectionPath); i++ {
+				docRef = docRef.Collection(update.Locator.FirestoreLocator.CollectionPath[i]).Doc(update.Locator.DocIDs[i])
+			}
+
+			err := t.Update(docRef, update.FieldsToUpdate.FirestoreUpdates)
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		log.Printf("Error updating and deleting data: %v", err)
+	}
 }

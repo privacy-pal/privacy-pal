@@ -1,26 +1,46 @@
 package pal
 
-import "cloud.google.com/go/firestore"
+import (
+	"encoding/json"
 
-type DocumentUpdates struct {
+	"cloud.google.com/go/firestore"
+)
+
+type documentUpdates struct {
 	Locator        Locator
-	FieldsToUpdate []firestore.Update
+	FieldsToUpdate FieldUpdates
 }
 
-func (pal *Client) ProcessDeletionRequest(handleDeletion HandleDeletionFunc, dataSubjectLocator Locator, dataSubjectID string) string {
+type FieldUpdates struct {
+	FirestoreUpdates []firestore.Update
+	MongoUpdates     []interface{}
+}
+
+func (pal *Client) ProcessDeletionRequest(handleDeletion HandleDeletionFunc, dataSubjectLocator Locator, dataSubjectID string, writeToDatabase bool) (string, error) {
 	documentsToUpdate, nodesToDelete, err := pal.processDeletionRequest(handleDeletion, dataSubjectLocator, dataSubjectID)
 	if err != nil {
-		return err.Error()
+		return "", err
 	}
-	pal.dbClient.updateAndDelete(documentsToUpdate, nodesToDelete)
-	return ""
+	if writeToDatabase {
+		pal.dbClient.updateAndDelete(documentsToUpdate, nodesToDelete)
+	}
+
+	result, err := json.Marshal(map[string]interface{}{
+		"writeToDatabase":   writeToDatabase,
+		"nodesToDelete":     nodesToDelete,
+		"documentsToUpdate": documentsToUpdate,
+	})
+	if err != nil {
+		return "", err
+	}
+	return string(result), nil
 }
 
 func (pal *Client) processDeletionRequest(
-	handleDelection HandleDeletionFunc,
+	handleDeletion HandleDeletionFunc,
 	locator Locator,
 	dataSubjectID string,
-) (documentsToUpdate []DocumentUpdates, nodesToDelete []Locator, err error) {
+) (documentsToUpdate []documentUpdates, nodesToDelete []Locator, err error) {
 	dataNodes := make([]DatabaseObject, 0)
 	if locator.LocatorType == Document {
 		node, err := pal.dbClient.getDocument(locator)
@@ -36,14 +56,14 @@ func (pal *Client) processDeletionRequest(
 		dataNodes = append(dataNodes, nodes...)
 	}
 
-	allDocumentsToUpdate := make([]DocumentUpdates, 0)
+	allDocumentsToUpdate := make([]documentUpdates, 0)
 	allNodesToDelete := make([]Locator, 0)
 	for _, currentDataNode := range dataNodes {
-		nodesToTraverse, deleteNode, fieldsToUpdate := handleDelection(dataSubjectID, locator, currentDataNode)
+		nodesToTraverse, deleteNode, fieldsToUpdate := handleDeletion(dataSubjectID, locator, currentDataNode)
 		// 1. first recursively process nested nodes
 		if len(nodesToTraverse) > 0 {
 			for _, nodeLocator := range nodesToTraverse {
-				documentsToUpdate, nodesToDelete, err := pal.processDeletionRequest(handleDelection, nodeLocator, dataSubjectID)
+				documentsToUpdate, nodesToDelete, err := pal.processDeletionRequest(handleDeletion, nodeLocator, dataSubjectID)
 				if err != nil {
 					return nil, nil, err
 				}
@@ -55,8 +75,8 @@ func (pal *Client) processDeletionRequest(
 		// 2. delete current node if needed
 		if deleteNode {
 			allNodesToDelete = append(allNodesToDelete, locator)
-		} else if fieldsToUpdate != nil {
-			allDocumentsToUpdate = append(allDocumentsToUpdate, DocumentUpdates{Locator: locator, FieldsToUpdate: fieldsToUpdate})
+		} else {
+			allDocumentsToUpdate = append(allDocumentsToUpdate, documentUpdates{Locator: locator, FieldsToUpdate: fieldsToUpdate})
 		}
 	}
 
