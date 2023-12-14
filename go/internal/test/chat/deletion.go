@@ -1,6 +1,7 @@
 package chat
 
 import (
+	"fmt"
 	"log"
 
 	"cloud.google.com/go/firestore"
@@ -9,7 +10,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-func HandleDeletion(dataSubjectId string, currentDbObjLocator pal.Locator, dbObj pal.DatabaseObject) (nodesToTraverse []pal.Locator, deleteNode bool, fieldsToUpdate pal.FieldUpdates) {
+func HandleDeletion(dataSubjectId string, currentDbObjLocator pal.Locator, dbObj pal.DatabaseObject) (nodesToTraverse []pal.Locator, deleteNode bool, fieldsToUpdate pal.FieldUpdates, err error) {
 	switch currentDbObjLocator.DataType {
 	case UserDataType:
 		return handleDeletionUser(dataSubjectId, currentDbObjLocator, dbObj)
@@ -20,12 +21,12 @@ func HandleDeletion(dataSubjectId string, currentDbObjLocator pal.Locator, dbObj
 	case DirectMessageDataType:
 		return handleDeletionDirectMessage(dataSubjectId, currentDbObjLocator, dbObj)
 	default:
-		// TODO: should return error
-		return nil, false, pal.FieldUpdates{}
+		err = fmt.Errorf("invalid data type: %s", currentDbObjLocator.DataType)
+		return
 	}
 }
 
-func handleDeletionUser(dataSubjectId string, currentDbObjLocator pal.Locator, dbObj pal.DatabaseObject) (nodesToTraverse []pal.Locator, deleteNode bool, fieldsToUpdate pal.FieldUpdates) {
+func handleDeletionUser(dataSubjectId string, currentDbObjLocator pal.Locator, dbObj pal.DatabaseObject) (nodesToTraverse []pal.Locator, deleteNode bool, fieldsToUpdate pal.FieldUpdates, err error) {
 	for _, id := range dbObj["gcs"].([]interface{}) {
 		id := id.(string)
 		objectID, err := primitive.ObjectIDFromHex(id)
@@ -72,7 +73,7 @@ func handleDeletionUser(dataSubjectId string, currentDbObjLocator pal.Locator, d
 	return
 }
 
-func handleDeletionGroupChat(dataSubjectId string, currentDbObjLocator pal.Locator, dbObj pal.DatabaseObject) (nodesToTraverse []pal.Locator, deleteNode bool, fieldsToUpdate pal.FieldUpdates) {
+func handleDeletionGroupChat(dataSubjectId string, currentDbObjLocator pal.Locator, dbObj pal.DatabaseObject) (nodesToTraverse []pal.Locator, deleteNode bool, fieldsToUpdate pal.FieldUpdates, err error) {
 	nodesToTraverse = append(nodesToTraverse, pal.Locator{
 		LocatorType: pal.Collection,
 		DataType:    MessageDataType,
@@ -120,12 +121,12 @@ func handleDeletionGroupChat(dataSubjectId string, currentDbObjLocator pal.Locat
 	return
 }
 
-func handleDeletionMessage(dataSubjectId string, currentDbObjLocator pal.Locator, dbObj pal.DatabaseObject) (nodesToTraverse []pal.Locator, deleteNode bool, fieldsToUpdate pal.FieldUpdates) {
+func handleDeletionMessage(dataSubjectId string, currentDbObjLocator pal.Locator, dbObj pal.DatabaseObject) (nodesToTraverse []pal.Locator, deleteNode bool, fieldsToUpdate pal.FieldUpdates, err error) {
 	deleteNode = true
 	return
 }
 
-func handleDeletionDirectMessage(dataSubjectId string, currentDbObjLocator pal.Locator, dbObj pal.DatabaseObject) (nodesToTraverse []pal.Locator, deleteNode bool, fieldsToUpdate pal.FieldUpdates) {
+func handleDeletionDirectMessage(dataSubjectId string, currentDbObjLocator pal.Locator, dbObj pal.DatabaseObject) (nodesToTraverse []pal.Locator, deleteNode bool, fieldsToUpdate pal.FieldUpdates, err error) {
 	nodesToTraverse = append(nodesToTraverse, pal.Locator{
 		LocatorType: pal.Collection,
 		DataType:    MessageDataType,

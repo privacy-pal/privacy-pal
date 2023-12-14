@@ -9,7 +9,7 @@ type HandleAccessFunc func(dataSubjectId string, currentDbObjLocator Locator, db
 
 // Only one of deleteNode and fieldsToUpdate should be set.
 // If deleteNode is set, fieldsToUpdate will be ignored (node will be deleted).
-type HandleDeletionFunc func(dataSubjectId string, currentDbObjLocator Locator, dbObj DatabaseObject) (nodesToTraverse []Locator, deleteNode bool, fieldsToUpdate FieldUpdates)
+type HandleDeletionFunc func(dataSubjectId string, currentDbObjLocator Locator, dbObj DatabaseObject) (nodesToTraverse []Locator, deleteNode bool, fieldsToUpdate FieldUpdates, err error)
 
 type Client struct {
 	dbClient databaseClient

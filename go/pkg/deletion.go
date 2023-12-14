@@ -59,7 +59,11 @@ func (pal *Client) processDeletionRequest(
 	allDocumentsToUpdate := make([]documentUpdates, 0)
 	allNodesToDelete := make([]Locator, 0)
 	for _, currentDataNode := range dataNodes {
-		nodesToTraverse, deleteNode, fieldsToUpdate := handleDeletion(dataSubjectID, locator, currentDataNode)
+		nodesToTraverse, deleteNode, fieldsToUpdate, err := handleDeletion(dataSubjectID, locator, currentDataNode)
+		if err != nil {
+			return nil, nil, err
+		}
+
 		// 1. first recursively process nested nodes
 		if len(nodesToTraverse) > 0 {
 			for _, nodeLocator := range nodesToTraverse {
