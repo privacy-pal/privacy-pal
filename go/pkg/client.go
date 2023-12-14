@@ -5,7 +5,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-type HandleAccessFunc func(dataSubjectId string, currentDbObjLocator Locator, dbObj DatabaseObject) map[string]interface{}
+type HandleAccessFunc func(dataSubjectId string, currentDbObjLocator Locator, dbObj DatabaseObject) (data map[string]interface{}, err error)
 
 // Only one of deleteNode and fieldsToUpdate should be set.
 // If deleteNode is set, fieldsToUpdate will be ignored (node will be deleted).

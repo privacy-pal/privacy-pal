@@ -53,4 +53,7 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 )
 
-retract v1.0.0
+retract (
+	v1.1.0
+	v1.0.0
+)

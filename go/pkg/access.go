@@ -23,7 +23,10 @@ func (pal *Client) ProcessAccessRequest(handleAccess HandleAccessFunc, dataSubje
 
 func (pal *Client) processAccessRequest(handleAccess HandleAccessFunc, dataNode DatabaseObject, dataSubjectID string, dataNodeLocator Locator) (map[string]interface{}, error) {
 
-	data := handleAccess(dataSubjectID, dataNodeLocator, dataNode)
+	data, err := handleAccess(dataSubjectID, dataNodeLocator, dataNode)
+	if err != nil {
+		return nil, err
+	}
 	report := make(map[string]interface{})
 
 	for key, value := range data {
