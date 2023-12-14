@@ -2,7 +2,6 @@ package chat
 
 import (
 	"fmt"
-	"log"
 
 	pal "github.com/privacy-pal/privacy-pal/go/pkg"
 	"go.mongodb.org/mongo-driver/bson"
@@ -16,45 +15,59 @@ const (
 	MessageDataType       = "message"
 )
 
-func HandleAccess(dataSubjectId string, currentDbObjLocator pal.Locator, dbObj pal.DatabaseObject) (data map[string]interface{}, err error) {
+func HandleAccessMongo(dataSubjectId string, currentDbObjLocator pal.Locator, dbObj pal.DatabaseObject) (data map[string]interface{}, err error) {
 	switch currentDbObjLocator.DataType {
 	case UserDataType:
-		return handleAccessUser(dataSubjectId, currentDbObjLocator, dbObj)
+		return handleAccessUserMongo(dataSubjectId, currentDbObjLocator, dbObj)
 	case GroupChatDataType:
-		return handleAccessGroupChat(dataSubjectId, currentDbObjLocator, dbObj)
+		return handleAccessGroupChatMongo(dataSubjectId, currentDbObjLocator, dbObj)
 	case MessageDataType:
-		return handleAccessMessage(dataSubjectId, currentDbObjLocator, dbObj)
+		return handleAccessMessageMongo(dataSubjectId, currentDbObjLocator, dbObj)
 	case DirectMessageDataType:
-		return handleAccessDirectMessage(dataSubjectId, currentDbObjLocator, dbObj)
+		return handleAccessDirectMessageMongo(dataSubjectId, currentDbObjLocator, dbObj)
 	default:
 		err = fmt.Errorf("invalid data type")
 		return
 	}
 }
 
-func handleAccessUser(dataSubjectId string, currentDbObjLocator pal.Locator, dbObj pal.DatabaseObject) (data map[string]interface{}, err error) {
+func handleAccessUserMongo(dataSubjectId string, currentDbObjLocator pal.Locator, dbObj pal.DatabaseObject) (data map[string]interface{}, err error) {
 	data = make(map[string]interface{})
 
-	// TODO: include in documentation: you can access the id in 2 ways
-	if dbObj["_id"].(string) != dataSubjectId {
+	id, ok := dbObj["_id"].(string)
+	if !ok {
+		err = fmt.Errorf("invalid id")
+		return
+	}
+	if id != dataSubjectId {
 		data["Name"] = dbObj["name"]
 		return
 	}
 	// if currentDbObjLocator.DocIDs[len(currentDbObjLocator.DocIDs)-1] != dataSubjectId {
 	// 	data["Name"] = dbObj["name"]
-	// 	return data
+	// 	return
 	// }
 
 	data["Name"] = dbObj["name"]
-	data["Groupchats"] = make([]pal.Locator, 0)
-	for _, id := range dbObj["gcs"].([]interface{}) {
-		id := id.(string)
-		objectID, err := primitive.ObjectIDFromHex(id)
+	groupchatLocators := make([]pal.Locator, 0)
+	gcs, ok := dbObj["gcs"].([]interface{})
+	if !ok {
+		err = fmt.Errorf("invalid gcs")
+		return
+	}
+	for _, id := range gcs {
+		id, ok := id.(string)
+		if !ok {
+			err = fmt.Errorf("invalid id")
+			return
+		}
+		var objectID primitive.ObjectID
+		objectID, err = primitive.ObjectIDFromHex(id)
 		if err != nil {
-			log.Println(err)
+			return
 		}
 
-		data["Groupchats"] = append(data["Groupchats"].([]pal.Locator), pal.Locator{
+		groupchatLocators = append(groupchatLocators, pal.Locator{
 			LocatorType: pal.Document,
 			DataType:    GroupChatDataType,
 			FirestoreLocator: pal.FirestoreLocator{
@@ -67,16 +80,27 @@ func handleAccessUser(dataSubjectId string, currentDbObjLocator pal.Locator, dbO
 			},
 		})
 	}
-	data["DirectMessages"] = make([]pal.Locator, 0)
-	// TODO: support this in yaml
-	for _, dmID := range dbObj["dms"].(map[string]interface{}) {
-		dmID := dmID.(string)
-		dmIDObj, err := primitive.ObjectIDFromHex(dmID)
+	data["Groupchats"] = groupchatLocators
+
+	directMessageLocators := make([]pal.Locator, 0)
+	dms, ok := dbObj["dms"].(map[string]interface{})
+	if !ok {
+		err = fmt.Errorf("invalid dms")
+		return
+	}
+	for _, dmID := range dms {
+		dmID, ok := dmID.(string)
+		if !ok {
+			err = fmt.Errorf("invalid id")
+			return
+		}
+		var dmIDObj primitive.ObjectID
+		dmIDObj, err = primitive.ObjectIDFromHex(dmID)
 		if err != nil {
-			log.Println(err)
+			return
 		}
 
-		data["DirectMessages"] = append(data["DirectMessages"].([]pal.Locator), pal.Locator{
+		directMessageLocators = append(directMessageLocators, pal.Locator{
 			LocatorType: pal.Document,
 			DataType:    DirectMessageDataType,
 			FirestoreLocator: pal.FirestoreLocator{
@@ -89,11 +113,12 @@ func handleAccessUser(dataSubjectId string, currentDbObjLocator pal.Locator, dbO
 			},
 		})
 	}
+	data["DirectMessages"] = directMessageLocators
 
 	return
 }
 
-func handleAccessGroupChat(dataSubjectId string, currentDbObjLocator pal.Locator, dbObj pal.DatabaseObject) (data map[string]interface{}, err error) {
+func handleAccessGroupChatMongo(dataSubjectId string, currentDbObjLocator pal.Locator, dbObj pal.DatabaseObject) (data map[string]interface{}, err error) {
 	data = make(map[string]interface{})
 
 	data["Messages"] = pal.Locator{
@@ -119,7 +144,7 @@ func handleAccessGroupChat(dataSubjectId string, currentDbObjLocator pal.Locator
 	return
 }
 
-func handleAccessMessage(dataSubjectId string, currentDbObjLocator pal.Locator, dbObj pal.DatabaseObject) (data map[string]interface{}, err error) {
+func handleAccessMessageMongo(dataSubjectId string, currentDbObjLocator pal.Locator, dbObj pal.DatabaseObject) (data map[string]interface{}, err error) {
 	data = make(map[string]interface{})
 
 	data["Content"] = dbObj["content"]
@@ -128,18 +153,29 @@ func handleAccessMessage(dataSubjectId string, currentDbObjLocator pal.Locator, 
 	return
 }
 
-func handleAccessDirectMessage(dataSubjectId string, currentDbObjLocator pal.Locator, dbObj pal.DatabaseObject) (data map[string]interface{}, err error) {
+func handleAccessDirectMessageMongo(dataSubjectId string, currentDbObjLocator pal.Locator, dbObj pal.DatabaseObject) (data map[string]interface{}, err error) {
 	data = make(map[string]interface{})
 
-	var otherUserId string
-	if dbObj["user1"].(string) == dataSubjectId {
-		otherUserId = dbObj["user2"].(string)
-	} else {
-		otherUserId = dbObj["user1"].(string)
+	user1, ok := dbObj["user1"].(string)
+	if !ok {
+		err = fmt.Errorf("invalid user1")
+		return
 	}
-	otherUserIDObj, err := primitive.ObjectIDFromHex(otherUserId)
+	user2, ok := dbObj["user2"].(string)
+	if !ok {
+		err = fmt.Errorf("invalid user2")
+		return
+	}
+	var otherUserId string
+	if user1 == dataSubjectId {
+		otherUserId = user2
+	} else {
+		otherUserId = user1
+	}
+	var otherUserIDObj primitive.ObjectID
+	otherUserIDObj, err = primitive.ObjectIDFromHex(otherUserId)
 	if err != nil {
-		log.Println(err)
+		return
 	}
 
 	data["Other User"] = pal.Locator{

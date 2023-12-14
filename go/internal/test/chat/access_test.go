@@ -83,7 +83,7 @@ func TestAccessWithGroupChatFirestore(t *testing.T) {
 	}
 
 	palClient := pal.NewClientWithFirestore(test.FirestoreClient)
-	data, err := palClient.ProcessAccessRequest(HandleAccess, dataSubjectLocator, user1.ID)
+	data, err := palClient.ProcessAccessRequest(HandleAccessFirestore, dataSubjectLocator, user1.ID)
 	if err != nil {
 		panic(err)
 	}
@@ -177,7 +177,7 @@ func TestAccessWithGroupChatMongo(t *testing.T) {
 	}
 
 	palClient := pal.NewClientWithMongo(test.MongoDb)
-	data, err := palClient.ProcessAccessRequest(HandleAccess, dataSubjectLocator, user1.ID)
+	data, err := palClient.ProcessAccessRequest(HandleAccessMongo, dataSubjectLocator, user1.ID)
 	if err != nil {
 		panic(err)
 	}
