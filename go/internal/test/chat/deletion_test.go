@@ -83,7 +83,7 @@ func TestDeletionWithGroupChatFirestore(t *testing.T) {
 	}
 
 	palClient := pal.NewClientWithFirestore(test.FirestoreClient)
-	data, err := palClient.ProcessDeletionRequest(HandleDeletion, dataSubjectLocator, user1.ID, false)
+	data, err := palClient.ProcessDeletionRequest(HandleDeletionFirestore, dataSubjectLocator, user1.ID, false)
 	if err != nil {
 		panic(err)
 	}
@@ -177,7 +177,7 @@ func TestDeletionWithGroupChatMongo(t *testing.T) {
 	}
 
 	palClient := pal.NewClientWithMongo(test.MongoDb)
-	data, err := palClient.ProcessDeletionRequest(HandleDeletion, dataSubjectLocator, user1.ID, false)
+	data, err := palClient.ProcessDeletionRequest(HandleDeletionMongo, dataSubjectLocator, user1.ID, false)
 	if err != nil {
 		panic(err)
 	}
