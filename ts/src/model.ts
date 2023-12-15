@@ -2,10 +2,10 @@ import { UpdateData } from 'firebase-admin/firestore';
 import { Filter, UpdateFilter } from 'mongodb';
 
 export type HandleAccessFunc<T extends Locator> =
-    (dataSubjectId: string, locator: T, obj: any) => Record<string, any>
+    (dataSubjectId: string, locator: T, databaseObject: any) => Record<string, any>
 
 export type HandleDeletionFunc<T extends Locator> =
-    (dataSubjectId: string, locator: T, obj: any) => {
+    (dataSubjectId: string, locator: T, databaseObject: any) => {
         nodesToTraverse: T[],
         deleteNode: boolean,
         fieldsToUpdate?: T extends MongoLocator ? UpdateFilter<any> | Partial<any> : UpdateData<any>
