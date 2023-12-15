@@ -17,7 +17,7 @@ import (
 
 var (
 	input  = flag.String("input", "", "comma-separated list of type names")
-	output = flag.String("output", "", "output file name; default srcdir/<type>_privacy.go")
+	output = flag.String("output", "", "output file name; default srcdir/privacy.go")
 )
 
 // Usage is a replacement usage function for the flags package.

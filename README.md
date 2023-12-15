@@ -1,32 +1,33 @@
 # Privacy Pal
 
-Privacy Pal is a framework that helps developers handle data subject access and deletion requests for applications using NoSQL databases. This repo contains the implementation of a Privacy Pal client that supports applications using MongoDB or Firestore as data store. The Privacy Pal client can be used in both Golang and TypeScript applications.
+Privacy Pal is a framework that helps developers handle data subject access and deletion requests for applications using NoSQL databases. This repo contains the implementation of a Privacy Pal client that supports applications using MongoDB or Firestore. Privacy Pal is available as a Go module and a TypeScript npm package.
 
 ## Setup
 
-### Installation
+### Go module
 
-To use privacy-pal in your Golang application:
+To install:
 
 ```bash
 go get github.com/privacy-pal/privacy-pal
 ```
 
-To use privacy-pal in your TypeScript application:
-
-```bash
-npm i privacy-pal
-```
-
-### Importing
-
-To import the Privacy Pal client in your Golang application:
+To import:
 
 ```golang
 import pal "github.com/privacy-pal/privacy-pal/go/pkg"
 ```
 
-To import the Privacy Pal client in your TypeScript application:
+
+### TypeScript npm package
+
+To install:
+
+```bash
+npm i privacy-pal
+```
+
+To import:
 
 ```typescript
 import * from 'privacy-pal';
@@ -34,7 +35,7 @@ import * from 'privacy-pal';
 
 ## Overview
 
-Privacy Pal helps developers focus on the core data ownership logic for fulfilling privacy requests since it has all the boilerplate code for retrieving, updating, and deleting data from the database.
+Privacy Pal helps developers focus on the core data ownership logic for fulfilling privacy requests as it handles the logic to retrieve, update, and delete data.
 
 To use Privacy Pal, follow these steps.
 
@@ -42,33 +43,21 @@ To use Privacy Pal, follow these steps.
 
 2. Initialize the Privacy Pal client with existing database client (MongoDB or Firestore).
 
-3. Invoke `ProcessAccessRequest` and `ProcessDeletionRequest` methods of the Privacy Pal client, passing in arguments like `HandleAccess` and `HandleDeletion`, to fulfill access and deletion requests respectively.
+3. Invoke `ProcessAccessRequest` and `ProcessDeletionRequest` methods of the Privacy Pal client, passing in the corresponding handler functions (`HandleAccess` or `HandleDeletion`) and a data subject locator, to fulfill access and deletion requests respectively.
+   - A data subject locator is a [locator](#locator) object used to retrieve the initial document storing user data. This document is the starting point for handling personal data stored in other documents.
 
 ## Core Concepts
 
-It is important to understand the following concepts since they are core to the Privacy Pal framework.
-
-### Data Subject
-
-A data subject is the person whose data is being accessed or deleted. For example, if a user wants to access or delete their personal data from a chat application, the user is the data subject.
-
-A data subject locator is used to locate the document for the data subject. This document is used as the starting point for retrieving all personal data for the data subject.
-
-A data subject ID is passed down the data ownership logic since it is often needed to determine whether a particular piece of data belongs to the data subject. For example, data subject ID might be used to check whether a given message nested under a group chat is sent by the data subject.
-
-### Database Object
-
-A database object is the data stored in a database document. The database object is passed to the `HanldeAccess` and `HandleDeletion` functions you define. You can then use the data to determine what data to return, modify, or delete, and identify documents to further traverse.
-
 ### Locator
 
-Privacy Pal uses Locators locate documents in the database. When you invoke the `ProcessXXXRequest` functions and implement your `HandleXXX` functions, you will need to use Locators.
+Privacy Pal uses locators to locate documents in the database. When you invoke the `ProcessXXXRequest` methods and implement your `HandleXXX` functions, you will need to use Locators.
 
 A locator needs to contain the following basic information:
 | Field          | Type       | Description                                           |
 | -------------- | ---------- | ----------------------------------------------------- |
 | LocatorType / IsSingleDocument   | Enum / Boolean      | Whether the locator points to a single document (`Document`) or a collection of documents (`Collection`). |
-| DataType       | String     | The type of data represented by the database object retrieved using this locator. Can be used in `HandleAccess` and `HandleDeletion` to determine what type of document is being processed.  <br/><br/>  We recommend choosing a name that is consistent with the naming of your application's structs/types. E.g. if the locator points to a "user" document, the `DataType` can be set to "user". |
+| DataType       | String     | The type of data represented by the document retrieved using this locator. Can be used in `HandleAccess` and `HandleDeletion` to determine what type of document is being processed.  <br/><br/>  We recommend choosing a name that is consistent with the naming of your application's structs/types. E.g. if the locator points to a "user" document, the `DataType` can be set to "user". |
+|Context (Optional)  | Any    | Arbitrary metadata that can be used to pass additional information to `HandleAccess` and `HandleDeletion`. See an example in [HandleDeletion](#implementing-handledeletion)|
 
 Since MongoDB and Firestore support different ways of locating documents, the Locator can contain either a MongoLocator or a FirestoreLocator, **but not both**.
 
@@ -119,106 +108,182 @@ pal.Locator{
 
 ### Implementing HandleAccess
 
-Use `ProcessAccessRequest` to retrieve all personal data for a particular user, passing in a `HandleAccess` function you defined. The `HandleAccess` should specify how to construct the access report returned to the user. To do so, it should return a map containing personal data related to the data subject, for **all possible data types**. The keys in the map will become the field names in the report. Here's an example of what a `HandleAccess` function might look like for a simple chat application:
+`ProcessAccessRequest` uses the `HandleAccess` function you define to retrieve all personal data for a particular user. 
 
-```golang
+`HandleAccess` has access to 3 values through its parameters:
+| Field          | Type       | Description                                           |
+| -------------- | ---------- | ----------------------------------------------------- |
+| dataSubjectID    | String       | The ID of the data subject we are building the access report for. You will pass this value in when `ProcessAccessRequest` is invoked. <br/> This ID can be used to determine whether a piece of data belongs to the data subject. |
+| locator    | Locator       | The current [locator](#locator) used to retreive document(s) from the database, containing information such as the type of data retrieved. |
+| dbObj    | DatabaseObject      | The document retrieved from the database using the locator, augmented with an `_id` field that contains a string |
+
+You should specify (for each object/document type), (1) which data fields are personal data belonging to the data subject and (2) more documents in the database that contain user data (using locators). The Privacy Pal client will use this function to perform recursive lookups and construct the privacy report, which follows the structure specified in your function. Here's an example of what a `HandleAccess` function might look like for a simple application with data types `user` and `post`:
+
+```typescript
+function handleAccess(dataSubjectId: string, locator: Locator, dbObj: any): map<string, any> {
+  switch (locator.dataType) {
+     case 'user':
+        return {
+           name: dbObj.name,
+           email: dbObj.email,
+           // construct locator for each post
+           posts: dbObj.posts.map((postId) => ({
+                dataType: 'post',
+                isSingleDocument: true,
+                collection: 'posts',
+                filter: {
+                    _id: new ObjectId(postId)
+                }
+           } as MongoLocator))
+        }
+     case 'post':
+        return {
+           content: dbObj.content,
+           …
+        }
+ }
+}
+```
+The user’s name and email are directly included in the report. For each post id stored in the user document, the client looks up the referenced post documents and returns its content. Based on this `handleAccess` function, the following privacy report will be generated:
+
+```json
+{
+ "name": "User1",
+  "email": "user1@gmail.com",
+  "posts": [
+          { "content": "Hey!"   }, 
+          { "content": "Hello!" }
+         ]
+}
+```
+
+Below is the same example in Go:
+
+```go
 func HandleAccess(dataSubjectID string, locator Locator, dbObj DatabaseObject) (data map[string]interface{}, err error) {
     switch currentDbObjLocator.DataType {
     case "user":
-        // handle data in user document
-    case "groupchat":
-        // handle data in groupchat document
-    case "directmessage":
-        // handle data in directmessage document
+        data["name"] = dbObj["name"]
+        data["email"] = dbObj["email"]
+        data["posts"] = make([]pal.Locator, 0)
+        // construct locator for each post
+        for _, id := range dbObj["posts"].([]interface{}) {
+            data["posts"] = append(data["posts"], pal.Locator{
+                LocatorType: pal.Document,
+                DataType:    "post",
+                FirestoreLocator: pal.FirestoreLocator{
+                    CollectionPath: []string{"posts"},
+                    DocIDs:         []string{id.(string)},
+                },
+		    })
+        }
+        return data, nil
+    case "post":
+        data["content"] = dbObj["content"]
+        return data, nil
     default:
         return nil, fmt.Errorf("unknown data type %s", currentDbObjLocator.DataType)
     }
 }
 ```
 
-HandleAccess has access to 3 values through its parameters:
-| Field          | Type       | Description                                           |
-| -------------- | ---------- | ----------------------------------------------------- |
-| dataSubjectID    | String       | The ID of the data subject we are building the access report for. You will pass this value in when `ProcessAccessRequest` is invoked. <br/> This ID can be used to determine whether a piece of data belongs to the data subject. |
-| locator    | Locator       | The current locator used to retreive document(s) from the database, containing information such as the type of data retrieved. See [Locator section](#locator) for information contained in a locator. |
-| dbObj    | DatabaseObject, <br/> an alias for `map[string]interface{}`       | The document retrieved from the database using the locator, augmented with an `_id` field that contains a string |
+Note that in Go, `dbObj` is of type `map[string]interface{}`. In order to properly operate on its fields, you need to cast the values into an appropriate type. In the above example, in order to operate on the list of postIds, you need to first cast the `posts` field to a list of interfaces and then cast each id to a string.
 
-Note that `dbObj` is of type `map[string]interface{}`. In order to properly operate on its fields, you need to cast the values into an appropriate type. For example, if you want to compare whether the "owner" field of a particular document matches with the dataSubjectId, you need to cast the owner field to a string in order to perform the comparison:
+Alternatively, you can (and are encouraged to) marshall the database document into your own struct to access the fields more easily (this will require you to put struct tags on your structs):
 
-```golang
-// Ensure that the "owner" field is a string
-owner, ok := dbObj["owner"].(string)
-if !ok {
-    return nil, fmt.Errorf("owner field is not a string")
-}
-
-// Compare the owner field with the dataSubjectId
-if dbObj["owner"].(string) != dataSubjectId {
-    ...
-}
-```
-
-If you are using a typed language (E.g. Golang), you are encouraged to marshall the database document into your own struct to access the fields more easily (this will require you to put struct tags on your structs):
-
-```golang
+```go
 jsonStr, err := json.Marshal(dbObj)
-// Message struct must have struct tags for json
-message := &Message{}
-err := json.Unmarshal(jsonStr, &message);
+// User struct must have struct tags for json
+user := &User{}
+err := json.Unmarshal(jsonStr, &user);
 
-// Can access the "owner" via message.Owner
-if message.Owner != dataSubjectId {
+// Can access the fields directly
+for _, id := range user.Posts {
    ...
 }
 ```
 
-When populating the map to return, there are two types of fields to consider:
-
-- For fields that should be directly added to the report returned to the user, add the field directly as the value into the map:
-
-    ```golang
-    data["Name"] = dbObj["name"]
-    ```
-
-- For fields that require reading other documents or collections from database, you can put a locator, a list of locators, or a map from string to locators as the value:
-
-    ```golang
-    // locator
-    data["Messages"] = Locator{}
-
-    // list of locators
-    data["Groupchats"] = []Locator{...}
-    ```
-
-    Privacy Pal will use these locators to retrieve the document or set of documents. Then it will invoke `HandleAccess` on the retrieved documents to recursively build the report.
-
-You can see a full example here
-TODO: add link to example
-
 ### Implementing HandleDeletion
 
-TODO: update HandleDeletion documentation
+`HandleDeletion` should specify (for each object/document type): (a) whether the current document should be deleted, (b) if not, any fields that should be updated in the current document, and (c) more documents containing personal data. 
 
-## Generate Handle Methods with Genpal
+Privacy Pal client uses the function to read from the database and keep track of documents to delete and update. When there is no more document to look up, it sends a transaction request to the database to delete and update all documents together. 
 
-TODO: update genpal documentation
+The deletion logic can also be customized for each application depending on user's privacy preferences. In the below example, a user can choose to delete or anonymize their posts. When deleting a user, the developer specifies in the data subject locator’s context field whether to anonymize their posts and passes this information to the post locators. When `HandleDeletion` is later invoked on a post, it has access to the post locator and can perform the corresponding operation. 
 
-Implementing the `HandleAccess` and `HandleDeletion` methods manually can be tedious. The genpal tool can generate stub implementations to get started.
-
-`genpal` accepts 3 parameters:
-- **mode (required):** one of the following 2 generation modes
-    - `typenames`: Only generates method headers based on a list of type names passed in.
-    - `yamlspec`: Generates more complete method stubs based on the yaml specification file. See the [genpal documentation](./genpal.md) for more details on the YAML format and options.
-- **input (required):** The input for the given mode. For `typenames` this is a comma-separated list of type names. For `yamlspec` it is the path to a YAML schema file.
-- **output (optional):** The path of the generated Go file. Defaults to `./privacy.go`
-
-For example,
+```TypeScript
+function handleDeletion(dataSubjectId: string, locator: Locator, dbObj: any): map<string, any> {
+  switch (locator.dataType) {
+     case 'user':
+        return {
+           nodesToTraverse: [
+              {
+                  dataType: "post",
+                  singleDocument: false,
+                  collection: "posts",
+                  filter: { author: dbObj._id },
+                  context: locator.context
+              }
+            ],
+           deleteNode: true
+        }
+     case 'post':
+        if (locator.context.anonymize) {
+           return {
+              nodesToTraverse: [],
+              deleteNode: false,
+              fieldsToUpdate: {
+                $set: {
+                    postedBy: 'anonymous'
+                }
+              }
+           }
+        } else {
+           return {
+              nodesToTraverse: [],
+              deleteNode: true
+           }
+        }
+ }
+}
 ```
-# Typenames mode
-genpal -mode=typenames -input=User,GroupChat,Message -output=internal/chat/privacy.go
 
-# YAML mode  
-genpal -mode=yamlspec -input=internal/chat/privacypal.yaml -output=internal/chat/privacy.go
+For easier debugging, Privacy Pal offers a trial run mode. When invoking `processDeletionRequest`, if `writeToDatabase` is set to false, the function performs a dry run traversal and returns all documents that would be deleted or updated without committing to the database. You can inspect this report to validate your `HandleDeletion` logic before enabling database changes.
+
+## Genpal - Stub Generator for Handle functions
+
+`HandleAccess` and `HandleDeletion` involve a lot of boilterplate code due to the modularized nature of the functions. To get started, we provide the GenPal code generation tool for automatically producing function stubs.
+
+To use genpal,
+```bash
+# TypeScript
+genpal -t=user,post -output=./privacy.ts -mode=[access/deletion]
+
+# Go
+# The generated code will live in the same package as the folder that contains the output file.
+genpal -input=user,post -output=./privacy.go -mode=[access/deletion]
 ```
 
-The generated code will live in the same package as the folder that contains the output file.
+Here's an example of the generated code for `HandleAccess`:
+
+```TypeScript
+function handleAccess(dataSubjectId: string, locator: Loctaor, dbObj: any): map<string, any> {
+  switch (locator.dataType) {
+     case 'user':
+        return handleAccessUser(dataSubjectId, locator, dbObj)
+     case 'post':
+        return handleAccessPost(dataSubjectId, locator, dbObj)
+   }
+ }
+
+function handleAccessUser(dataSubjectId: string, locator: Loctaor, dbObj: any): {
+   // personal data stored in user document
+   return {}
+}
+
+function handleAccessPost(dataSubjectId: string, locator: Loctaor, dbObj: any): {
+   // personal data stored in post document
+   return {}
+}
+
+```
