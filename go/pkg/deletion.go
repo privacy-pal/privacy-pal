@@ -41,7 +41,7 @@ func (pal *Client) processDeletionRequest(
 	locator Locator,
 	dataSubjectID string,
 ) (documentsToUpdate []documentUpdates, nodesToDelete []Locator, err error) {
-	dataNodes := make([]DatabaseObject, 0)
+	dataNodes := make([]locatorAndObject, 0)
 	if locator.LocatorType == Document {
 		node, err := pal.dbClient.getDocument(locator)
 		if err != nil {
@@ -58,8 +58,11 @@ func (pal *Client) processDeletionRequest(
 
 	allDocumentsToUpdate := make([]documentUpdates, 0)
 	allNodesToDelete := make([]Locator, 0)
-	for _, currentDataNode := range dataNodes {
-		nodesToTraverse, deleteNode, fieldsToUpdate, err := handleDeletion(dataSubjectID, locator, currentDataNode)
+	for _, currNode := range dataNodes {
+		currLocator := currNode.Locator
+		currObject := currNode.Object
+
+		nodesToTraverse, deleteNode, fieldsToUpdate, err := handleDeletion(dataSubjectID, currLocator, currObject)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -78,9 +81,9 @@ func (pal *Client) processDeletionRequest(
 
 		// 2. delete current node if needed
 		if deleteNode {
-			allNodesToDelete = append(allNodesToDelete, locator)
+			allNodesToDelete = append(allNodesToDelete, currLocator)
 		} else {
-			allDocumentsToUpdate = append(allDocumentsToUpdate, documentUpdates{Locator: locator, FieldsToUpdate: fieldsToUpdate})
+			allDocumentsToUpdate = append(allDocumentsToUpdate, documentUpdates{Locator: currLocator, FieldsToUpdate: fieldsToUpdate})
 		}
 	}
 

@@ -16,7 +16,7 @@ func newDbClientForFirestore(client *firestore.Client) databaseClient {
 	return &firestoreClient{client: client}
 }
 
-func (c *firestoreClient) getDocument(loc Locator) (DatabaseObject, error) {
+func (c *firestoreClient) getDocument(loc Locator) (locatorAndObject, error) {
 	docRef := c.client.Collection(loc.FirestoreLocator.CollectionPath[0]).Doc(loc.DocIDs[0])
 
 	for i := 1; i < len(loc.FirestoreLocator.CollectionPath); i++ {
@@ -25,18 +25,18 @@ func (c *firestoreClient) getDocument(loc Locator) (DatabaseObject, error) {
 
 	doc, err := docRef.Get(context.Background())
 	if err != nil {
-		return nil, fmt.Errorf("%s %w", GET_DOCUMENT_ERROR, err)
+		return locatorAndObject{}, fmt.Errorf("%s %w", GET_DOCUMENT_ERROR, err)
 	}
 	if !doc.Exists() {
-		return nil, fmt.Errorf("%s document does not exist", GET_DOCUMENT_ERROR)
+		return locatorAndObject{}, fmt.Errorf("%s document does not exist", GET_DOCUMENT_ERROR)
 	}
 
 	data := doc.Data()
 	data["_id"] = doc.Ref.ID
-	return data, nil
+	return locatorAndObject{Locator: loc, Object: data}, nil
 }
 
-func (c *firestoreClient) getDocuments(loc Locator) ([]DatabaseObject, error) {
+func (c *firestoreClient) getDocuments(loc Locator) ([]locatorAndObject, error) {
 	docRef := c.client.Collection(loc.FirestoreLocator.CollectionPath[0])
 
 	for i := 1; i < len(loc.FirestoreLocator.CollectionPath); i++ {
@@ -51,17 +51,25 @@ func (c *firestoreClient) getDocuments(loc Locator) ([]DatabaseObject, error) {
 		}
 	}
 
-	doc, err := query.Documents(context.Background()).GetAll()
+	docs, err := query.Documents(context.Background()).GetAll()
 
 	if err != nil {
 		return nil, fmt.Errorf("%s %w", GET_DOCUMENT_ERROR, err)
 	}
 
-	dataNodes := make([]DatabaseObject, len(doc))
-	for i, d := range doc {
+	dataNodes := make([]locatorAndObject, len(docs))
+	for i, d := range docs {
 		data := d.Data()
 		data["_id"] = d.Ref.ID
-		dataNodes[i] = data
+		newLoc := Locator{
+			LocatorType: Document,
+			DataType:    loc.DataType,
+			FirestoreLocator: FirestoreLocator{
+				CollectionPath: loc.FirestoreLocator.CollectionPath,
+				DocIDs:         append(loc.DocIDs, d.Ref.ID),
+			},
+		}
+		dataNodes[i] = locatorAndObject{Locator: newLoc, Object: data}
 	}
 	return dataNodes, nil
 }

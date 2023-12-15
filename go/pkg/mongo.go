@@ -20,7 +20,7 @@ func newDbClientForMongo(mongoDb *mongo.Database) databaseClient {
 	return &mongoClient{db: mongoDb}
 }
 
-func (c *mongoClient) getDocument(loc Locator) (DatabaseObject, error) {
+func (c *mongoClient) getDocument(loc Locator) (locatorAndObject, error) {
 	// Get a single result based on the collection and filter supplied in the locator
 	collection := c.db.Collection(loc.MongoLocator.Collection)
 
@@ -30,28 +30,28 @@ func (c *mongoClient) getDocument(loc Locator) (DatabaseObject, error) {
 	bsonResult := bson.M{}
 	if err := collection.FindOne(ctx, loc.MongoLocator.Filter).Decode(&bsonResult); err != nil {
 		if err == mongo.ErrNoDocuments {
-			return nil, fmt.Errorf("%s document does not exist", GET_DOCUMENT_ERROR)
+			return locatorAndObject{}, fmt.Errorf("%s document does not exist", GET_DOCUMENT_ERROR)
 		}
-		return nil, fmt.Errorf("%s %w", GET_DOCUMENT_ERROR, err)
+		return locatorAndObject{}, fmt.Errorf("%s %w", GET_DOCUMENT_ERROR, err)
 	}
 
 	// Convert bson.M to DatabaseObject
 	tempBytes, err := bson.MarshalExtJSON(bsonResult, true, true)
 	if err != nil {
-		return nil, fmt.Errorf("%s %w", GET_DOCUMENT_ERROR, err)
+		return locatorAndObject{}, fmt.Errorf("%s %w", GET_DOCUMENT_ERROR, err)
 	}
 
 	result := DatabaseObject{}
 	err = json.Unmarshal(tempBytes, &result)
 	if err != nil {
-		return nil, fmt.Errorf("%s %w", GET_DOCUMENT_ERROR, err)
+		return locatorAndObject{}, fmt.Errorf("%s %w", GET_DOCUMENT_ERROR, err)
 	}
 	result["_id"] = bsonResult["_id"].(primitive.ObjectID).Hex()
 
-	return result, nil
+	return locatorAndObject{Locator: loc, Object: result}, nil
 }
 
-func (c *mongoClient) getDocuments(loc Locator) ([]DatabaseObject, error) {
+func (c *mongoClient) getDocuments(loc Locator) ([]locatorAndObject, error) {
 	// Get a list of results based on the collection and filter supplied in the locator
 	collection := c.db.Collection(loc.MongoLocator.Collection)
 
@@ -69,7 +69,7 @@ func (c *mongoClient) getDocuments(loc Locator) ([]DatabaseObject, error) {
 	}
 
 	// Convert bson.M to DatabaseObject
-	results := []DatabaseObject{}
+	results := []locatorAndObject{}
 	for _, result := range bsonResults {
 		tempBytes, err := bson.MarshalExtJSON(result, true, true)
 		if err != nil {
@@ -81,7 +81,7 @@ func (c *mongoClient) getDocuments(loc Locator) ([]DatabaseObject, error) {
 			return nil, fmt.Errorf("%s %w", GET_DOCUMENT_ERROR, err)
 		}
 		convertedResult["_id"] = result["_id"].(primitive.ObjectID).Hex()
-		results = append(results, convertedResult)
+		results = append(results, locatorAndObject{Locator: loc, Object: convertedResult})
 	}
 
 	return results, nil

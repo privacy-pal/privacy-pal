@@ -9,10 +9,11 @@ func (pal *Client) ProcessAccessRequest(handleAccess HandleAccessFunc, dataSubje
 	if dataSubjectLocator.LocatorType != Document {
 		return nil, fmt.Errorf("%s data subject locator type must be document", ACCESS_REQUEST_ERROR)
 	}
-	dataSubject, err := pal.dbClient.getDocument(dataSubjectLocator)
+	locAndObj, err := pal.dbClient.getDocument(dataSubjectLocator)
 	if err != nil {
 		return nil, fmt.Errorf("%s %w", ACCESS_REQUEST_ERROR, err)
 	}
+	dataSubject := locAndObj.Object
 	data, err := pal.processAccessRequest(handleAccess, dataSubject, dataSubjectID, dataSubjectLocator)
 	if err != nil {
 		return nil, fmt.Errorf("%s %w", ACCESS_REQUEST_ERROR, err)
@@ -72,20 +73,27 @@ func (pal *Client) processLocator(handleAccess HandleAccessFunc, loc Locator, da
 		return nil, err
 	}
 	if loc.LocatorType == Document {
-		dataNode, err := pal.dbClient.getDocument(loc)
+		locAndObj, err := pal.dbClient.getDocument(loc)
 		if err != nil {
 			return nil, err
 		}
+		dataNode := locAndObj.Object
 		retData, err := pal.processAccessRequest(handleAccess, dataNode, dataSubjectID, loc)
 		if err != nil {
 			return nil, err
 		}
 		return retData, nil
 	} else if loc.LocatorType == Collection {
-		dataNodes, err := pal.dbClient.getDocuments(loc)
+		locAndObjs, err := pal.dbClient.getDocuments(loc)
 		if err != nil {
 			return nil, err
 		}
+
+		dataNodes := make([]DatabaseObject, 0)
+		for _, locAndObj := range locAndObjs {
+			dataNodes = append(dataNodes, locAndObj.Object)
+		}
+
 		var retData []interface{}
 		for _, dataNode := range dataNodes {
 			currDataNodeData, err := pal.processAccessRequest(handleAccess, dataNode, dataSubjectID, loc)
