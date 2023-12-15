@@ -1,17 +1,21 @@
 # Privacy Pal
 
 Privacy Pal is a framework that helps developers handle data subject access and deletion requests for applications using NoSQL databases. This repo contains the implementation of a Privacy Pal client that supports applications using MongoDB or Firestore. Privacy Pal is available as a Go module and a TypeScript npm package.
+Privacy Pal is a framework that helps developers handle data subject access and deletion requests for applications using NoSQL databases. This repo contains the implementation of a Privacy Pal client that supports applications using MongoDB or Firestore. Privacy Pal is available as a Go module and a TypeScript npm package.
 
 ## Setup
 
 ### Go module
+### Go module
 
+To install:
 To install:
 
 ```bash
 go get github.com/privacy-pal/privacy-pal
 ```
 
+To import:
 To import:
 
 ```golang
