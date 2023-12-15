@@ -2,9 +2,9 @@
 import { Firestore } from 'firebase-admin/firestore';
 import { MongoClient, Db } from 'mongodb';
 import Database from './database';
-import { DocumentUpdates, FirestoreLocator, HandleAccessFunc, HandleDeletionFunc, MongoLocator, isLocator, validateLocator } from './model';
+import { DocumentUpdates, Locator, HandleAccessFunc, HandleDeletionFunc, isLocator, validateLocator } from './model';
 
-class PrivacyPalClient<T extends FirestoreLocator | MongoLocator>{
+class PrivacyPalClient<T extends Locator>{
 
     db: Database;
 

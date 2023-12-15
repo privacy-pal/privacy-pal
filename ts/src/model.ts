@@ -1,10 +1,10 @@
 import { UpdateData } from 'firebase-admin/firestore';
 import { Filter, UpdateFilter } from 'mongodb';
 
-export type HandleAccessFunc<T extends FirestoreLocator | MongoLocator> =
+export type HandleAccessFunc<T extends Locator> =
     (dataSubjectId: string, locator: T, obj: any) => Record<string, any>
 
-export type HandleDeletionFunc<T extends FirestoreLocator | MongoLocator> =
+export type HandleDeletionFunc<T extends Locator> =
     (dataSubjectId: string, locator: T, obj: any) => {
         nodesToTraverse: T[],
         deleteNode: boolean,
@@ -25,7 +25,7 @@ export interface FirestoreLocator extends LocatorBase {
 }
 
 // internal 
-export interface DocumentUpdates<T extends FirestoreLocator | MongoLocator> {
+export interface DocumentUpdates<T extends Locator> {
     locator: T;
     fieldsToUpdate: T extends MongoLocator ? UpdateFilter<any> : UpdateData<any>;
 }
@@ -36,7 +36,7 @@ interface LocatorBase {
     context?: any; // any additional information to be passed to the handleAccess or handleDeletion function
 }
 
-export function validateLocator(locator: FirestoreLocator | MongoLocator): Error | null {
+export function validateLocator(locator: Locator): Error | null {
     if (isFirestoreLocator(locator)) {
         if (!locator.collectionPath || locator.collectionPath.length === 0) {
             return new Error("Locator must have a collectionPath");
@@ -55,7 +55,7 @@ export function validateLocator(locator: FirestoreLocator | MongoLocator): Error
     return null;
 }
 
-export function isLocator<T extends FirestoreLocator | MongoLocator>(obj: any): obj is T {
+export function isLocator<T extends Locator>(obj: any): obj is T {
     return obj && obj.dataType && (obj.singleDocument !== undefined);
 }
 
