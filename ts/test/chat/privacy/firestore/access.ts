@@ -36,7 +36,7 @@ function handleAccessGroupChat(dataSubjectId: string, locator: FirestoreLocator,
             singleDocument: false,
             collectionPath: [...locator.collectionPath, FirestoreCollections.Messages],
             docIds: locator.docIds,
-            queries: [Filter.where('userID', '==', dataSubjectId)]
+            filters: [Filter.where('userID', '==', dataSubjectId)]
         } as FirestoreLocator
     };
 };
@@ -95,7 +95,7 @@ function handleAccessDirectMessage(dataSubjectId: string, locator: FirestoreLoca
             singleDocument: false,
             collectionPath: [...locator.collectionPath, FirestoreCollections.Messages],
             docIds: locator.docIds,
-            queries: [Filter.where('userID', '==', dataSubjectId)]
+            filters: [Filter.where('userID', '==', dataSubjectId)]
         } as FirestoreLocator
     };
 };

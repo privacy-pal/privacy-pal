@@ -30,10 +30,10 @@ export async function getDocumentsFromFirestore(db: Firestore, locator: Firestor
     }
 
     let query: Query = docRef;
-    if (locator.queries?.length) {
-        query = query.where(locator.queries[0]);
-        for (let i = 1; i < locator.queries.length; i++) {
-            query = query.where(locator.queries[i]);
+    if (locator.filters?.length) {
+        query = query.where(locator.filters[0]);
+        for (let i = 1; i < locator.filters.length; i++) {
+            query = query.where(locator.filters[i]);
         }
     }
 

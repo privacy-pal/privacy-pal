@@ -21,7 +21,7 @@ export interface MongoLocator extends LocatorBase {
 export interface FirestoreLocator extends LocatorBase {
     collectionPath: string[];
     docIds: string[];
-    queries?: FirebaseFirestore.Filter[];
+    filters?: FirebaseFirestore.Filter[];
 }
 
 // internal 
