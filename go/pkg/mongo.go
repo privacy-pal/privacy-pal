@@ -48,6 +48,7 @@ func (c *mongoClient) getDocument(loc Locator) (locatorAndObject, error) {
 	}
 	result["_id"] = bsonResult["_id"].(primitive.ObjectID).Hex()
 
+	loc.LocatorType = Document
 	return locatorAndObject{Locator: loc, Object: result}, nil
 }
 
@@ -68,6 +69,7 @@ func (c *mongoClient) getDocuments(loc Locator) ([]locatorAndObject, error) {
 		return nil, fmt.Errorf("%s %w", GET_DOCUMENT_ERROR, err)
 	}
 
+	loc.LocatorType = Document
 	// Convert bson.M to DatabaseObject
 	results := []locatorAndObject{}
 	for _, result := range bsonResults {
