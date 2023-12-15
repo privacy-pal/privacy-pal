@@ -6,7 +6,6 @@ Privacy Pal is a framework that helps developers handle data subject access and 
 ## Setup
 
 ### Go module
-### Go module
 
 To install:
 To install:
