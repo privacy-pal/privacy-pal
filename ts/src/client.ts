@@ -25,6 +25,25 @@ class PrivacyPalClient<T extends FirestoreLocator | MongoLocator>{
         // TODO: maybe make all timestamp values human readable
     }
 
+    async processDeletionRequest(
+        handleDeletion: HandleDeletionFunc<T>,
+        dataSubjectLocator: T,
+        dataSubjectId: string,
+        writeToDatabase: boolean
+    ): Promise<string> {
+        console.log("Processing deletion request for data subject " + dataSubjectId);
+
+        const { documentsToUpdate, nodesToDelete } = await this.processDeletionRequestHelper(handleDeletion, dataSubjectId, dataSubjectLocator);
+        if (writeToDatabase) {
+            try {
+                await this.db.updateAndDelete(documentsToUpdate, nodesToDelete);
+            } catch (err) {
+                return "Failed to write to database: " + err;
+            }
+        }
+        return JSON.stringify({ writeToDatabase, documentsToUpdate, nodesToDelete });
+    }
+
     private async processAccessRequestHelper(
         handleAccess: HandleAccessFunc<T>,
         dataNode: any,
@@ -65,46 +84,6 @@ class PrivacyPalClient<T extends FirestoreLocator | MongoLocator>{
         return report;
     }
 
-    private async processLocator(handleAccess: HandleAccessFunc<T>, locator: T, dataSubjectID: string): Promise<Record<string, any>> {
-        const err = validateLocator(locator);
-        if (err) {
-            throw err;
-        }
-
-        if (locator.singleDocument) {
-            const dataNode = await this.db.getDocument(locator);
-            const retData = await this.processAccessRequestHelper(handleAccess, dataNode, dataSubjectID, locator);
-            return retData;
-        } else {
-            const dataNodes = await this.db.getDocuments(locator);
-            const retData: Record<string, any>[] = [];
-            for (var dataNode of dataNodes) {
-                const currDataNodeData = await this.processAccessRequestHelper(handleAccess, dataNode, dataSubjectID, locator);
-                retData.push(currDataNodeData);
-            }
-            return retData;
-        }
-    }
-
-    async processDeletionRequest(
-        handleDeletion: HandleDeletionFunc<T>,
-        dataSubjectLocator: T,
-        dataSubjectId: string,
-        writeToDatabase: boolean
-    ): Promise<string> {
-        console.log("Processing deletion request for data subject " + dataSubjectId);
-
-        const { documentsToUpdate, nodesToDelete } = await this.processDeletionRequestHelper(handleDeletion, dataSubjectId, dataSubjectLocator);
-        if (writeToDatabase) {
-            try {
-                await this.db.updateAndDelete(documentsToUpdate, nodesToDelete);
-            } catch (err) {
-                return "Failed to write to database: " + err;
-            }
-        }
-        return JSON.stringify({ writeToDatabase, documentsToUpdate, nodesToDelete });
-    }
-
     private async processDeletionRequestHelper(
         handleDeletion: HandleDeletionFunc<T>,
         dataSubjectID: string,
@@ -143,6 +122,26 @@ class PrivacyPalClient<T extends FirestoreLocator | MongoLocator>{
         return { documentsToUpdate: allDocumentsToUpdate, nodesToDelete: allNodesToDelete };
     }
 
+    private async processLocator(handleAccess: HandleAccessFunc<T>, locator: T, dataSubjectID: string): Promise<Record<string, any>> {
+        const err = validateLocator(locator);
+        if (err) {
+            throw err;
+        }
+
+        if (locator.singleDocument) {
+            const dataNode = await this.db.getDocument(locator);
+            const retData = await this.processAccessRequestHelper(handleAccess, dataNode, dataSubjectID, locator);
+            return retData;
+        } else {
+            const dataNodes = await this.db.getDocuments(locator);
+            const retData: Record<string, any>[] = [];
+            for (var dataNode of dataNodes) {
+                const currDataNodeData = await this.processAccessRequestHelper(handleAccess, dataNode, dataSubjectID, locator);
+                retData.push(currDataNodeData);
+            }
+            return retData;
+        }
+    }
 }
 
 export default PrivacyPalClient;
